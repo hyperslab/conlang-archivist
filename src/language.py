@@ -1,5 +1,5 @@
 import copy
-from word import Word
+from src.word import Word
 import random
 
 

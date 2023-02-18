@@ -1,5 +1,5 @@
-from sound_change_rule import SoundChangeRule
-import sound_helpers
+from src.sound_change_rule import SoundChangeRule
+from src import sound_helpers
 
 
 class WordFormRule:

@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter.messagebox import showinfo
-from language import Language
+from src.language import Language
 
 
 class NewLanguageWindow:

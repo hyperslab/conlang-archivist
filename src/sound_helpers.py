@@ -1,5 +1,5 @@
 import copy
-from sound import Sound
+from src.sound import Sound
 
 
 def get_nearby_sound(sequence, i, j, steps=1, backwards=False):

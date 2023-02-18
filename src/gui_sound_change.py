@@ -1,7 +1,7 @@
 import copy
 import tkinter as tk
-from gui_sound import SoundSelectWindow
-from sound_change_rule import SoundChangeRule
+from src.gui_sound import SoundSelectWindow
+from src.sound_change_rule import SoundChangeRule
 
 
 class SoundChangeWindow:

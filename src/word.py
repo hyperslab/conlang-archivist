@@ -1,7 +1,7 @@
 import copy
-import sound_helpers
+from src import sound_helpers
 import itertools
-import id_assigner
+from src import id_assigner
 
 
 class Word:

@@ -1,4 +1,4 @@
-import db
+from src import db
 
 db.delete_db()
 db.create_db()

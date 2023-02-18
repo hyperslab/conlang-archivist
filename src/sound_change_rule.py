@@ -1,4 +1,4 @@
-import sound_helpers
+from src import sound_helpers
 
 
 class SoundChangeRule:

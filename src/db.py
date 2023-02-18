@@ -1,10 +1,10 @@
 import copy
 import sqlite3
-from sound import Sound
-from word import Word
-from sound_change_rule import SoundChangeRule
-from language import Language
-from word_form_rule import WordFormRule
+from src.sound import Sound
+from src.word import Word
+from src.sound_change_rule import SoundChangeRule
+from src.language import Language
+from src.word_form_rule import WordFormRule
 import os
 
 DB_FILE_PATH = 'languages.db'

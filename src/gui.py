@@ -1,15 +1,11 @@
 import random
 import tkinter as tk
-import gui_sound
-import gui_word
-import db
-from sound_change_rule import SoundChangeRule
-from word_form_rule import WordFormRule
-from gui_word_form import WordFormWindow, NewWordFormWindow
-from gui_sound import NewSoundWindow, SoundSelectWindow
-from gui_word import NewWordWindow
-from gui_sound_change import NewSoundChangeWindow, SoundChangeWindow
-from gui_language import NewLanguageWindow
+from src import db
+from src.gui_word_form import WordFormWindow, NewWordFormWindow
+from src.gui_sound import NewSoundWindow, SoundSelectWindow, SoundWindow
+from src.gui_word import NewWordWindow, WordWindow
+from src.gui_sound_change import NewSoundChangeWindow, SoundChangeWindow
+from src.gui_language import NewLanguageWindow
 
 
 class Application:
@@ -518,7 +514,7 @@ class Application:
     def open_sound(self, sound, allow_edit=True):
         sound_window = tk.Toplevel(self.frame)
         edit_command = self.update_edit_sound if allow_edit else None
-        gui_sound.SoundWindow(sound_window, sound, edit_command)
+        SoundWindow(sound_window, sound, edit_command)
 
     def open_current_language_sound(self, event):
         self.open_sound(self.language_sounds[event.widget.curselection()[0]])
@@ -528,8 +524,8 @@ class Application:
 
     def open_word(self, word, allow_edit=True):
         word_window = tk.Toplevel(self.frame)
-        gui_word.WordWindow(word_window, self.current_language, word,
-                            edit_word_command=self.update_edit_word if allow_edit else None)
+        WordWindow(word_window, self.current_language, word,
+                   edit_word_command=self.update_edit_word if allow_edit else None)
 
     def open_current_language_word(self, event):
         self.open_word(self.language_words[event.widget.curselection()[0]])
@@ -554,9 +550,9 @@ class Application:
     def open_history_item(self, event):
         item = self.language_history[event.widget.curselection()[0]]
         order = event.widget.curselection()[0]
-        if type(item) is SoundChangeRule:
+        if 'SoundChangeRule' in str(type(item)):  # 'type(x) is y' does not work anymore for some reason
             self.open_sound_change(item, order)
-        elif type(item) is WordFormRule:
+        elif 'WordFormRule' in str(type(item)):
             word_form_window = tk.Toplevel(self.frame)
             WordFormWindow(master=word_form_window, language=self.current_language, word_form=item,
                            edit_word_form_command=self.update_edit_word_form)

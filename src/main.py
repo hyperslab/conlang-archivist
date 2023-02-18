@@ -1,8 +1,8 @@
-from sound_change_rule import SoundChangeRule
-from sound import Sound
-from language import Language
-import db
-from word_form_rule import WordFormRule
+from src.sound_change_rule import SoundChangeRule
+from src.sound import Sound
+from src.language import Language
+from src import db
+from src.word_form_rule import WordFormRule
 
 
 def generate_koa():
