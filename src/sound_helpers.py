@@ -60,7 +60,7 @@ def check_condition(sequence, i1, j1, i2, j2, condition, condition_sounds=None):
                 if inverted:
                     k = k + 1  # negation following _: check position relative to !, then advance
             if condition[k] == '@':  # @ here tells the code to check against the next sound in condition_sounds
-                if (not inverted and condition_sounds[condition_sounds_used] == target_sound) or \
+                if (not inverted and condition_sounds[condition_sounds_used] != target_sound) or \
                         (inverted and condition_sounds[condition_sounds_used] == target_sound):
                     conditions_met = False
                 condition_sounds_used = condition_sounds_used + 1
