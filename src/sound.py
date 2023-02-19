@@ -145,3 +145,9 @@ class Sound:
     def __hash__(self):
         return hash(self.orthographic_transcription + self.ipa_transcription + self.phonotactics_categories +
                     str(self.frequency) + self.description + str(self.get_generation_options()))
+
+    def __str__(self):
+        string = self.orthographic_transcription
+        if self.ipa_transcription:
+            string = string + ' /' + self.ipa_transcription + '/'
+        return string
