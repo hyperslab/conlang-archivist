@@ -134,7 +134,7 @@ class Word:
 
     def add_word_sound_change(self, sound_change):
         if sound_change.stage == -1:  # word sound changes need a stage to function correctly
-            sound_change.stage = self.get_current_stage()
+            sound_change.stage = self.get_current_stage()  # it is still recommended to set this manually before calling
         self.word_sound_changes.append(sound_change)
 
     def all_sound_changes(self):

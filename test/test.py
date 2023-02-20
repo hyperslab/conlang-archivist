@@ -1,6 +1,10 @@
 import unittest
+from copy import copy
+
 from src.sound import Sound
+from src.sound_change_rule import SoundChangeRule
 from src.sound_helpers import change_sounds
+from src.word import Word
 
 
 # noinspection SpellCheckingInspection
@@ -265,6 +269,279 @@ class TestSoundHelpers(unittest.TestCase):
         target_sequence = [[a, a, b, b, a, b, c, c, c]]
         new_sequence = change_sounds(old_sequence, [b], [b, a, b], condition='#VV@_C@@#', condition_sounds=[b, c, c])
         self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_19(self):
+        """
+        Test a condition that contains a negation.
+
+        'abbc' to 'aabc' via 'b > a /!C_'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        old_sequence = [[a, b, b, c]]
+        target_sequence = [[a, a, b, c]]
+        new_sequence = change_sounds(old_sequence, [b], [a], condition='!C_')
+        self.assertEqual(target_sequence, new_sequence)
+
+
+# noinspection SpellCheckingInspection
+class TestWord(unittest.TestCase):
+    def setUp(self):
+        self.a_ae = Sound('a', 'æ', 'V')
+        self.b = Sound('b', 'b', 'C')
+        self.a_schwa = Sound('a', 'ə', 'Və')
+        self.c_k = Sound('c', 'k', 'C')
+        self.u_schwa = Sound('u', 'ə', 'Və')
+        self.s = Sound('s', 's', 'C')
+        self.abacus = Word([[self.a_ae], [self.b, self.a_schwa], [self.c_k, self.u_schwa, self.s]], 'N',
+                           assign_id=False)  # don't use id assignment for tests not specifically about id assignment
+        self.u = Sound('u', 'u', 'V')
+        self.unschwa_u = SoundChangeRule(self.u_schwa, self.u)
+        self.schwa_u = SoundChangeRule(self.u, self.u_schwa)
+        self.p = Sound('p', 'p', 'C')
+        self.unvoice_b = SoundChangeRule(self.b, self.p)
+        self.d = Sound('d', 'd', 'C')
+        self.puh_to_duh = SoundChangeRule(self.p, self.d, condition='_ə')
+        self.t = Sound('t', 't', 'C')
+        self.final_s_to_t = SoundChangeRule(self.s, self.t, condition='_#')
+        self.voice_t = SoundChangeRule(self.t, self.d)
+        self.stop = Sound("'", 'ʔ', 'C')
+        self.final_d_to_stop = SoundChangeRule(self.d, self.stop, condition='_#')
+
+    def test_word_1(self):
+        """
+        Test that a language sound change applies to the modern stem.
+        """
+        self.abacus.add_language_sound_change(self.unschwa_u)
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.b, self.a_schwa], [self.c_k, self.u, self.s]])
+
+    def test_word_2(self):
+        """
+        Test that a language sound change does not apply to the base stem.
+        """
+        self.abacus.add_language_sound_change(self.unschwa_u)
+        self.assertEqual(self.abacus.get_base_stem(),
+                         [[self.a_ae], [self.b, self.a_schwa], [self.c_k, self.u_schwa, self.s]])
+
+    def test_word_3(self):
+        """
+        Test that a word sound change applies to the modern stem.
+        """
+        self.abacus.add_word_sound_change(self.unschwa_u)
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.b, self.a_schwa], [self.c_k, self.u, self.s]])
+
+    def test_word_4(self):
+        """
+        Test that a word sound change does not apply to the base stem.
+        """
+        self.abacus.add_word_sound_change(self.unschwa_u)
+        self.assertEqual(self.abacus.get_base_stem(),
+                         [[self.a_ae], [self.b, self.a_schwa], [self.c_k, self.u_schwa, self.s]])
+
+    def test_word_5(self):
+        """
+        Test that applying a language sound change twice will have the same
+        effect as applying it once.
+        """
+        single = copy(self.abacus)
+        double = copy(self.abacus)
+        single.add_language_sound_change(self.unschwa_u)
+        double.add_language_sound_change(self.unschwa_u)
+        double.add_language_sound_change(self.unschwa_u)
+        self.assertEqual(single.get_modern_stem(), double.get_modern_stem())
+
+    def test_word_6(self):
+        """
+        Test that applying a word sound change twice will have the same
+        effect as applying it once.
+        """
+        single = copy(self.abacus)
+        double = copy(self.abacus)
+        single.add_word_sound_change(self.unschwa_u)
+        double.add_word_sound_change(self.unschwa_u)
+        double.add_word_sound_change(self.unschwa_u)
+        self.assertEqual(single.get_modern_stem(), double.get_modern_stem())
+
+    def test_word_7(self):
+        """
+        Test that applying a sound change as a language sound change and
+        again as a word sound change will have the same effect as applying
+        it as only a language sound change.
+        """
+        single = copy(self.abacus)
+        double = copy(self.abacus)
+        single.add_language_sound_change(self.unschwa_u)
+        double.add_language_sound_change(self.unschwa_u)
+        double.add_word_sound_change(self.unschwa_u)
+        self.assertEqual(single.get_modern_stem(), double.get_modern_stem())
+
+    def test_word_8(self):
+        """
+        Test that applying a sound change as a language sound change and
+        again as a word sound change will have the same effect as applying
+        it as only a word sound change.
+        """
+        single = copy(self.abacus)
+        double = copy(self.abacus)
+        single.add_word_sound_change(self.unschwa_u)
+        double.add_language_sound_change(self.unschwa_u)
+        double.add_word_sound_change(self.unschwa_u)
+        self.assertEqual(single.get_modern_stem(), double.get_modern_stem())
+
+    def test_word_9(self):
+        """
+        Test that two different language sound changes both apply.
+        """
+        self.abacus.add_language_sound_change(self.unschwa_u)
+        self.abacus.add_language_sound_change(self.unvoice_b)
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.p, self.a_schwa], [self.c_k, self.u, self.s]])
+
+    def test_word_10(self):
+        """
+        Test that two different word sound changes both apply.
+        """
+        self.abacus.add_word_sound_change(self.unschwa_u)
+        self.abacus.add_word_sound_change(self.unvoice_b)
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.p, self.a_schwa], [self.c_k, self.u, self.s]])
+
+    def test_word_11(self):
+        """
+        Test that two different sound changes, one a language sound change
+        and one a word sound change, both apply.
+        """
+        self.abacus.add_language_sound_change(self.unschwa_u)
+        self.abacus.add_word_sound_change(self.unvoice_b)
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.p, self.a_schwa], [self.c_k, self.u, self.s]])
+
+    def test_word_12(self):
+        """
+        Test that language sound changes apply in order by testing that a
+        sound change dependent on a prior sound change applies.
+        """
+        self.abacus.add_language_sound_change(self.unvoice_b)
+        self.abacus.add_language_sound_change(self.puh_to_duh)
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.d, self.a_schwa], [self.c_k, self.u_schwa, self.s]])
+
+    def test_word_13(self):
+        """
+        Test that word sound changes apply in order by testing that a
+        sound change dependent on a prior sound change applies.
+        """
+        self.abacus.add_word_sound_change(self.unvoice_b)
+        self.abacus.add_word_sound_change(self.puh_to_duh)
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.d, self.a_schwa], [self.c_k, self.u_schwa, self.s]])
+
+    def test_word_14(self):
+        """
+        Test that a mixture of word sound changes and language sound
+        changes apply in order by testing that sound changes dependent
+        on prior sound changes apply.
+        """
+        self.abacus.add_word_sound_change(self.unvoice_b)
+        self.abacus.add_language_sound_change(self.puh_to_duh)
+        self.abacus.add_language_sound_change(self.final_s_to_t)
+        self.abacus.add_word_sound_change(self.voice_t)
+        self.abacus.add_language_sound_change(self.final_d_to_stop)
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.d, self.a_schwa], [self.c_k, self.u_schwa, self.stop]])
+
+    def test_word_15(self):
+        """
+        Test that language sound changes from before a word's original
+        language stage do not apply.
+        """
+        self.abacus.add_language_sound_change(self.unvoice_b)  # stage 0 to 1
+        self.abacus.add_language_sound_change(self.final_s_to_t)  # stage 1 to 2
+        self.abacus.add_language_sound_change(self.unschwa_u)  # stage 2 to 3
+        self.abacus.original_language_stage = 2  # added during stage 2, so the 0 to 2 changes should not apply
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.b, self.a_schwa], [self.c_k, self.u, self.s]])
+
+    def test_word_16(self):
+        """
+        Test that language sound changes from after a word's obsoleted
+        language stage do not apply.
+        """
+        self.abacus.add_language_sound_change(self.unvoice_b)  # stage 0 to 1
+        self.abacus.add_language_sound_change(self.final_s_to_t)  # stage 1 to 2
+        self.abacus.add_language_sound_change(self.unschwa_u)  # stage 2 to 3
+        self.abacus.obsoleted_language_stage = 2  # obsoleted during stage 2, so the 2 to 3 change should not apply
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.p, self.a_schwa], [self.c_k, self.u_schwa, self.t]])
+
+    def test_word_17(self):
+        """
+        Test that language sound changes from before a word's original
+        language stage and after a word's obsoleted language stage both do
+        not apply.
+        """
+        self.abacus.add_language_sound_change(self.unvoice_b)  # stage 0 to 1
+        self.abacus.add_language_sound_change(self.final_s_to_t)  # stage 1 to 2
+        self.abacus.add_language_sound_change(self.unschwa_u)  # stage 2 to 3
+        self.abacus.original_language_stage = 1  # added during stage 1, so the 0 to 1 change should not apply
+        self.abacus.obsoleted_language_stage = 2  # obsoleted during stage 2, so the 2 to 3 change should not apply
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.b, self.a_schwa], [self.c_k, self.u_schwa, self.t]])
+
+    def test_word_18(self):
+        """
+        Test that a word with an original language stage equivalent to its
+        obsoleted language stage will not have any language sound changes
+        applied to it.
+        """
+        self.abacus.add_language_sound_change(self.unvoice_b)  # stage 0 to 1
+        self.abacus.add_language_sound_change(self.final_s_to_t)  # stage 1 to 2
+        self.abacus.add_language_sound_change(self.unschwa_u)  # stage 2 to 3
+        self.abacus.original_language_stage = 2  # added during stage 1, so the 0 to 2 changes should not apply
+        self.abacus.obsoleted_language_stage = 2  # obsoleted during stage 2, so the 2 to 3 change should not apply
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.b, self.a_schwa], [self.c_k, self.u_schwa, self.s]])
+
+    def test_word_19(self):
+        """
+        Test that word sound changes from the word's original language stage
+        apply to the word alongside the proper language sound changes.
+        """
+        self.abacus.add_language_sound_change(self.unvoice_b)  # stage 0 to 1
+        self.abacus.add_word_sound_change(self.final_s_to_t)  # stage 1
+        self.abacus.add_language_sound_change(self.unschwa_u)  # stage 1 to 2
+        self.abacus.original_language_stage = 1  # added during stage 1, so the 0 to 1 change should not apply
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.b, self.a_schwa], [self.c_k, self.u, self.t]])
+
+    def test_word_20(self):
+        """
+        Test that word sound changes from the word's obsoleted language stage
+        apply to the word alongside the proper language sound changes.
+        """
+        self.abacus.add_language_sound_change(self.unvoice_b)  # stage 0 to 1
+        self.abacus.add_word_sound_change(self.final_s_to_t)  # stage 1
+        self.abacus.add_language_sound_change(self.unschwa_u)  # stage 1 to 2
+        self.abacus.obsoleted_language_stage = 1  # obsoleted during stage 1, so the 1 to 2 change should not apply
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.p, self.a_schwa], [self.c_k, self.u_schwa, self.t]])
+
+    def test_word_21(self):
+        """
+        Test that word sound changes from the word's only language stage
+        apply to the word when its original language stage is equivalent to
+        its obsoleted language stage alongside no language sound changes.
+        """
+        self.abacus.add_language_sound_change(self.unvoice_b)  # stage 0 to 1
+        self.abacus.add_word_sound_change(self.final_s_to_t)  # stage 1
+        self.abacus.add_language_sound_change(self.unschwa_u)  # stage 1 to 2
+        self.abacus.original_language_stage = 1  # added during stage 1, so the 0 to 1 change should not apply
+        self.abacus.obsoleted_language_stage = 1  # obsoleted during stage 1, so the 1 to 2 change should not apply
+        self.assertEqual(self.abacus.get_modern_stem(),
+                         [[self.a_ae], [self.b, self.a_schwa], [self.c_k, self.u_schwa, self.t]])
 
 
 if __name__ == '__main__':
