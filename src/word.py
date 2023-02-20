@@ -37,7 +37,7 @@ class Word:
             self.word_id = id_assigner.new_word_id()
         self.base_stem = base_stem  # don't access this directly unless you're sure the word is not branched etc.
         self.categories = categories
-        self.language_sound_changes = list()  # inherited from the language and applies to all words in it
+        self.language_sound_changes = list()  # inherited from the language; should be same as language.sound_changes
         self.word_sound_changes = list()  # unique to this word
         self.original_language_stage = original_language_stage  # the stage the word was added to its language
         self.obsoleted_language_stage = -1  # the stage the word was removed from its language
@@ -133,18 +133,21 @@ class Word:
             form.add_language_sound_change(sound_change)
 
     def add_word_sound_change(self, sound_change):
+        if sound_change.stage == -1:  # word sound changes need a stage to function correctly
+            sound_change.stage = self.get_current_stage()
         self.word_sound_changes.append(sound_change)
 
     def all_sound_changes(self):
+        """Gets all sound changes, in order, that apply to the modern word."""
         ordered_sound_changes = list()
-        i = 0
-        for language_sound_change in self.language_sound_changes:
-            ordered_sound_changes.append(language_sound_change)
+        # add all language sound changes and word sound changes that correspond to a language stage
+        for i in range(self.original_language_stage, self.get_current_stage()):
             for word_sound_change in [s for s in self.word_sound_changes if s.stage == i]:
                 ordered_sound_changes.append(word_sound_change)
-            i = i + 1
-        for word_sound_change in sorted([s for s in self.word_sound_changes if s.stage >= i],
-                                        key=lambda s: s.word_change_stage):
+            ordered_sound_changes.append(self.language_sound_changes[i])
+        # add word sound changes from stages at or beyond the highest language stage
+        for word_sound_change in sorted([s for s in self.word_sound_changes if s.stage >= self.get_current_stage()],
+                                        key=lambda s: s.stage):
             ordered_sound_changes.append(word_sound_change)
         return ordered_sound_changes
 
@@ -305,3 +308,9 @@ class Word:
                         if sound is not None:
                             return False
         return True
+
+    def get_current_stage(self):
+        if self.obsoleted_language_stage >= 0:
+            return min(len(self.language_sound_changes), self.obsoleted_language_stage)
+        else:
+            return len(self.language_sound_changes)
