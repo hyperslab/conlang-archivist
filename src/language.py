@@ -70,11 +70,13 @@ class Language:
         for word in words:
             self.add_word(word, language_stage)
 
-    def generate_word(self, min_syllable_length=1, max_syllable_length=2, category='', language_stage=-1):
+    def generate_word(self, min_syllable_length=1, max_syllable_length=2, category='', language_stage=-1,
+                      assign_id=True):
         return self.generate_words(1, min_syllable_length, max_syllable_length, category=category,
-                                   language_stage=language_stage)[0]
+                                   language_stage=language_stage, assign_ids=assign_id)[0]
 
-    def generate_words(self, words=1, min_syllable_length=1, max_syllable_length=2, category='', language_stage=-1):
+    def generate_words(self, words=1, min_syllable_length=1, max_syllable_length=2, category='', language_stage=-1,
+                       assign_ids=True):
         new_words = list()
         for i in range(words):
             stem = list()
@@ -85,7 +87,7 @@ class Language:
                                                            word_final=j == len(syllable_range) - 1,
                                                            previous_syllable=previous_syllable)
                 stem.append(previous_syllable)
-            new_words.append(Word(stem, category))
+            new_words.append(Word(stem, category, assign_id=assign_ids))
         return new_words
 
     def generate_syllable(self, phonotactics=None, language_stage=-1, word_initial=False, word_final=False,
