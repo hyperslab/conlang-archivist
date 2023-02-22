@@ -1,6 +1,7 @@
 import unittest
 from copy import copy
 
+from src.language import Language
 from src.sound import Sound
 from src.sound_change_rule import SoundChangeRule
 from src.sound_helpers import change_sounds
@@ -542,6 +543,39 @@ class TestWord(unittest.TestCase):
         self.abacus.obsoleted_language_stage = 1  # obsoleted during stage 1, so the 1 to 2 change should not apply
         self.assertEqual(self.abacus.get_modern_stem(),
                          [[self.a_ae], [self.b, self.a_schwa], [self.c_k, self.u_schwa, self.t]])
+
+
+# noinspection SpellCheckingInspection
+class TestLanguage(unittest.TestCase):
+    def setUp(self):
+        self.t = Sound('t', 't', 'C')
+        self.e = Sound('e', 'ɛ', 'V')
+        self.s = Sound('s', 's', 'C')
+        self.p = Sound('p', 'p', 'C')
+        self.ea_i = Sound('ea', 'i', 'V')
+        self.k = Sound('k', 'k', 'C')
+        sounds = [self.t, self.e, self.s, self.p, self.ea_i, self.k]
+        self.testspeak = Language('Testspeak', sounds, 'C(C)VC(C)')
+        self.test = Word([[self.t, self.e, self.s, self.t]], 'N', assign_id=False)
+        self.test.word_id = 1
+        self.speak = Word([[self.s, self.p, self.ea_i, self.k]], 'N', assign_id=False)
+        self.speak.word_id = 2
+        words = [self.test, self.speak]
+        self.testspeak.add_words(words)
+
+    def test_language_1(self):
+        """
+        Test generation of a two-syllable Word of category 'N' (noun) from language stage 0.
+        """
+        word = self.testspeak.generate_word(min_syllable_length=2, max_syllable_length=2, category='N',
+                                            language_stage=0, assign_id=False)
+        word.word_id = 3
+        self.assertIsInstance(word, Word)  # is a Word
+        self.assertEqual(len(word.base_stem), 2)  # has 2 syllables
+        for syllable in word.base_stem:
+            for sound in syllable:
+                self.assertIn(sound, self.testspeak.original_phonetic_inventory)  # contains only sounds from the lang
+        self.assertTrue(word.fits_phonotactics(self.testspeak.phonotactics))  # matches language phonotactics
 
 
 if __name__ == '__main__':
