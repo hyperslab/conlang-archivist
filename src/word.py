@@ -314,3 +314,71 @@ class Word:
             return min(len(self.language_sound_changes), self.obsoleted_language_stage)
         else:
             return len(self.language_sound_changes)
+
+    def fits_phonotactics(self, phonotactics, test_base_stem=False):
+        """Check if the Word is compatible with the given phonotactics string.
+
+        Compares each syllable in the Word to the phonotactics and returns
+        False if any syllable is incompatible.
+
+        Supports (), {}, and numbers in the phonotactics string.
+        """
+        test_stem = self.get_modern_stem() if not test_base_stem else self.get_base_stem()
+        phonotactics.translate(dict.fromkeys(map(ord, u"1234567890,")))  # don't care about these characters
+
+        def split_parenthesis(tactics):
+            """Create a list of all possible resolutions of parentheses in a phonotactics string."""
+            for i, char in enumerate(tactics):
+                if char == '(':
+                    j = i
+                    layer = 1
+                    while layer > 0:
+                        j = j + 1
+                        if tactics[j] == '(':
+                            layer = layer + 1
+                        elif tactics[j] == ')':
+                            layer = layer - 1
+                    excluded = split_parenthesis(tactics[:i] + tactics[j+1:])  # without content in parentheses
+                    included = split_parenthesis(tactics[:i] + tactics[i+1:j] + tactics[j+1:])  # including it
+                    return excluded + included
+            return [tactics]  # string contains no parentheses (base case)
+
+        possibilities = []
+        for possibility in split_parenthesis(phonotactics):  # resolve {} brackets
+            parsed = []
+            index = 0
+            while index < len(possibility):
+                if possibility[index] != '{':
+                    parsed.append(possibility[index])
+                else:
+                    sounds = ''
+                    index = index + 1
+                    while possibility[index] != '}':
+                        sounds = sounds + possibility[index]
+                        index = index + 1
+                    parsed.append(sounds)
+                index = index + 1
+            possibilities.append(parsed)
+
+        # see if each syllable matches at least one possible resolution of the phonotactics
+        for syllable in test_stem:  # kind of a brute-force approach but this won't be called much so probably ok
+            syllable_tactics = [s.phonotactics_categories for s in syllable]
+            found_possibility = False
+            for possibility in possibilities:
+                if len(possibility) != len(syllable_tactics):
+                    continue
+                for p, st in zip(possibility, syllable_tactics):
+                    if len(st) == 1 and st not in p:
+                        continue
+                    found = False
+                    for category in st:
+                        if category in p:
+                            found = True
+                    if not found:
+                        continue
+                found_possibility = True
+                break
+            if not found_possibility:
+                return False
+
+        return True
