@@ -44,24 +44,27 @@ class Language:
     def add_word(self, word, language_stage=-1):
         if language_stage < 0:
             language_stage = self.get_current_stage()
-        if not word.is_word_form():
-            self.words.append(word)  # add word
+        self.words.append(word)  # add word
         word.original_language_stage = language_stage
-        if not word.is_word_form():  # add pre-existing forms to words that are not already forms
-            for word_form in self.get_forms_at_stage(language_stage):
-                if any(category in word.categories for category in word_form.categories):
-                    self.apply_form_to_word(word_form, word)
-        if not word.is_word_form():
-            i = language_stage
-            while i < len(self.sound_changes):  # evolve non-form words based on what point it was added
-                sound_change = self.sound_changes[i]
-                word.add_language_sound_change(sound_change)
-                i = i + 1
-                if not word.word_form_name:  # add forms from the new language stage to words that are not already forms
-                    for word_form in self.get_forms_added_at_stage(i):
-                        if any(category in word.categories for category in word_form.categories):
-                            self.apply_form_to_word(word_form, word)
-        for syllable in word.get_modern_stem():  # reassess phonetic inventory
+
+        # add language sound changes to word
+        for sound_change in self.sound_changes:  # evolve words
+            word.add_language_sound_change(sound_change)
+
+        # add forms to word
+        for word_form in self.get_forms_at_stage(language_stage):  # preexisting forms
+            if any(category in word.categories for category in word_form.categories):
+                self.apply_form_to_word(word_form, word)
+        i = language_stage
+        while i < len(self.sound_changes):
+            i = i + 1
+            if not word.word_form_name:  # add forms from the new language stage to word
+                for word_form in self.get_forms_added_at_stage(i):
+                    if any(category in word.categories for category in word_form.categories):
+                        self.apply_form_to_word(word_form, word)
+
+        # reassess phonetic inventory
+        for syllable in word.get_modern_stem():
             for sound in syllable:
                 if sound not in self.modern_phonetic_inventory:
                     self.modern_phonetic_inventory.append(sound)
