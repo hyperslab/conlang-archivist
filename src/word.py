@@ -382,3 +382,13 @@ class Word:
                 return False
 
         return True
+
+    def get_base_sounds(self):
+        for syllable in self.get_base_stem():
+            for sound in syllable:
+                yield sound
+
+    def get_modern_sounds(self):
+        for syllable in self.get_modern_stem():
+            for sound in syllable:
+                yield sound
