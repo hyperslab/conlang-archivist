@@ -548,6 +548,7 @@ class TestWord(unittest.TestCase):
 # noinspection SpellCheckingInspection
 class TestLanguage(unittest.TestCase):
     def setUp(self):
+        # testspeak language and all its components
         self.t = Sound('t', 't', 'C')
         self.e = Sound('e', 'ɛ', 'V')
         self.s = Sound('s', 's', 'C')
@@ -562,12 +563,17 @@ class TestLanguage(unittest.TestCase):
         self.speak.word_id = 2
         words = [self.test, self.speak]
         self.testspeak.add_words(words)
+
+        # components that do not start as part of the testspeak language
         self.w = Sound('w', 'w', 'C')
         self.or_e = Sound('or', 'ɝ', 'V')
         self.d = Sound('d', 'd', 'C')
         self.word = Word([[self.w, self.or_e, self.d]], 'N', assign_id=False)
         self.final_st_to_s = SoundChangeRule([self.s, self.t], [self.s], condition='_#')
         self.unvoice_d = SoundChangeRule([self.d], [self.t])
+        self.ee_i = Sound('ee', 'i', 'V')
+        self.ch = Sound('ch', 't͡ʃ', 'C')
+        self.speech = Word([[self.s, self.p, self.ee_i, self.ch]], assign_id=False)
 
     def test_language_1(self):
         """
@@ -656,7 +662,36 @@ class TestLanguage(unittest.TestCase):
         self.testspeak.apply_sound_change(self.unvoice_d)
         self.testspeak.add_word(self.word)
         self.assertIn(self.unvoice_d, self.word.language_sound_changes)  # the Word should contain the sound change
-        self.assertEqual(self.word.get_modern_stem(), [[self.w, self.or_e, self.d]])  # but know not to apply it
+        self.assertNotIn(self.unvoice_d, self.word.all_sound_changes())  # but know not to apply it
+        self.assertEqual(self.word.get_modern_stem(), [[self.w, self.or_e, self.d]])  # to the modern stem
+
+    def test_language_9(self):
+        """
+        Test that adding alternating words and sound changes to a Language
+        causes all words to inherit all sound changes in order.
+        """
+        self.testspeak.add_word(self.word)
+        self.testspeak.apply_sound_change(self.unvoice_d)
+        self.testspeak.add_word(self.speech)
+        self.testspeak.apply_sound_change(self.final_st_to_s)
+        for word in self.testspeak.words:
+            for word_change, testspeak_change in zip(word.language_sound_changes, self.testspeak.sound_changes):
+                self.assertEqual(word_change, testspeak_change)
+
+    def test_language_10(self):
+        """
+        Test that adding alternating words and sound changes to a Language
+        causes the added words to only apply sound changes to themselves that
+        were added after they were.
+        """
+        self.testspeak.add_word(self.word)
+        self.testspeak.apply_sound_change(self.unvoice_d)
+        self.testspeak.add_word(self.speech)
+        self.testspeak.apply_sound_change(self.final_st_to_s)
+        self.assertIn(self.unvoice_d, self.word.all_sound_changes())
+        self.assertIn(self.final_st_to_s, self.word.all_sound_changes())
+        self.assertNotIn(self.unvoice_d, self.speech.all_sound_changes())
+        self.assertIn(self.final_st_to_s, self.speech.all_sound_changes())
 
 
 if __name__ == '__main__':
