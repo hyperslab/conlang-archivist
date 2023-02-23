@@ -562,10 +562,17 @@ class TestLanguage(unittest.TestCase):
         self.speak.word_id = 2
         words = [self.test, self.speak]
         self.testspeak.add_words(words)
+        self.w = Sound('w', 'w', 'C')
+        self.or_e = Sound('or', 'ɝ', 'V')
+        self.d = Sound('d', 'd', 'C')
+        self.word = Word([[self.w, self.or_e, self.d]], 'N', assign_id=False)
+        self.final_st_to_s = SoundChangeRule([self.s, self.t], [self.s], condition='_#')
+        self.unvoice_d = SoundChangeRule([self.d], [self.t])
 
     def test_language_1(self):
         """
-        Test generation of a two-syllable Word of category 'N' (noun) from language stage 0.
+        Test generation of a two-syllable Word of category 'N' (noun) from
+        language stage 0.
         """
         word = self.testspeak.generate_word(min_syllable_length=2, max_syllable_length=2, category='N',
                                             language_stage=0, assign_id=False)
@@ -576,6 +583,80 @@ class TestLanguage(unittest.TestCase):
             for sound in syllable:
                 self.assertIn(sound, self.testspeak.original_phonetic_inventory)  # contains only sounds from the lang
         self.assertTrue(word.fits_phonotactics(self.testspeak.phonotactics))  # matches language phonotactics
+
+    def test_language_2(self):
+        """
+        Test that generating a Word from a Language and adding it to the
+        Language will not cause the phonetic inventory of the Language to be
+        modified from its original stage.
+        """
+        word = self.testspeak.generate_word(assign_id=False)
+        self.testspeak.add_word(word)
+        self.assertEqual(self.testspeak.original_phonetic_inventory, self.testspeak.modern_phonetic_inventory)
+
+    def test_language_3(self):
+        """
+        Test that adding a Word to a Language with sounds not previously in
+        the Language will cause those sounds to be added to its phonetic
+        inventory based on the modern stem of the Word.
+        """
+        old_inventory = set(self.testspeak.modern_phonetic_inventory)
+        self.testspeak.add_word(self.word)
+        new_inventory = set(self.testspeak.modern_phonetic_inventory)
+        target_inventory = set(self.word.get_modern_sounds()).union(old_inventory)
+        self.assertNotEqual(old_inventory, new_inventory)
+        self.assertEqual(target_inventory, new_inventory)
+
+    def test_language_4(self):
+        """
+        Test generating 10 words at once and adding them all to the Language
+        from which they were generated.
+        """
+        words = self.testspeak.generate_words(10, assign_ids=False)
+        words_before = len(self.testspeak.words)
+        self.testspeak.add_words(words)
+        self.assertEqual(len(self.testspeak.words), words_before + 10)
+        self.assertEqual(self.testspeak.original_phonetic_inventory, self.testspeak.modern_phonetic_inventory)
+
+    def test_language_5(self):
+        """
+        Test that adding a sound change to a Language increments its current
+        stage by 1.
+        """
+        stage_before = self.testspeak.get_current_stage()
+        self.testspeak.apply_sound_change(self.final_st_to_s)
+        self.assertEqual(self.testspeak.get_current_stage(), stage_before + 1)
+
+    def test_language_6(self):
+        """
+        Test that adding a sound change to a Language causes it to be applied
+        to all words in the Language.
+        """
+        self.testspeak.add_word(self.word)
+        self.testspeak.apply_sound_change(self.unvoice_d)
+        for word in self.testspeak.words:
+            self.assertIn(self.unvoice_d, word.language_sound_changes)
+        self.assertEqual(self.word.get_modern_stem(), [[self.w, self.or_e, self.t]])
+
+    def test_language_7(self):
+        """
+        Test that adding a sound change to a Language causes it to be saved
+        as the last item in the list of the language's sound changes.
+        """
+        self.testspeak.apply_sound_change(self.final_st_to_s)
+        self.assertEqual(self.final_st_to_s, self.testspeak.sound_changes[-1])
+
+    def test_language_8(self):
+        """
+        Test that adding a Word to a Language with a sound change will cause
+        the Word to inherit the sound change from the Language even if the
+        Word has been added at a stage where the sound change should not apply
+        to it.
+        """
+        self.testspeak.apply_sound_change(self.unvoice_d)
+        self.testspeak.add_word(self.word)
+        self.assertIn(self.unvoice_d, self.word.language_sound_changes)  # the Word should contain the sound change
+        self.assertEqual(self.word.get_modern_stem(), [[self.w, self.or_e, self.d]])  # but know not to apply it
 
 
 if __name__ == '__main__':
