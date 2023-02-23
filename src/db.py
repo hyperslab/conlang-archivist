@@ -6,8 +6,9 @@ from src.sound_change_rule import SoundChangeRule
 from src.language import Language
 from src.word_form_rule import WordFormRule
 import os
+import configparser
 
-DB_FILE_PATH = 'languages.db'
+CONFIG_FILE_PATH = './config.ini'
 LOGGING_LEVEL = 2  # https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.loglevel
 
 language_cache = {}
@@ -38,9 +39,22 @@ def disable_cache():
     word_cache = {}
 
 
+def get_connection():
+    if not os.path.isfile(CONFIG_FILE_PATH):  # write defaults if no config exists
+        config = configparser.ConfigParser()
+        config['database'] = {}
+        config['database']['path'] = './languages.db'
+        with open(CONFIG_FILE_PATH, 'w') as configfile:
+            config.write(configfile)
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE_PATH)
+    db_path = config['database']['path']
+    return sqlite3.connect(db_path)
+
+
 def create_db():
     log('Entering create_db', 2)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     con.execute('CREATE TABLE sound(sound_id INTEGER PRIMARY KEY, orthographic_transcription, ipa_transcription, '
                 'phonotactics_categories, description)')
     con.execute('CREATE TABLE syllable(syllable_id INTEGER PRIMARY KEY, word_id, ordering)')
@@ -75,13 +89,19 @@ def create_db():
 
 def delete_db():
     log('Entering delete_db', 3)
-    os.remove(DB_FILE_PATH)
+    if not os.path.isfile(CONFIG_FILE_PATH):
+        log("No config file found; can't locate db", 3)
+        return
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE_PATH)
+    db_path = config['database']['path']
+    os.remove(db_path)
     log('Exiting delete_db', 3)
 
 
 def insert_sound(sound):
     log('Entering insert_sound', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur.execute('INSERT INTO sound(orthographic_transcription, ipa_transcription, phonotactics_categories, '
                 'description) VALUES(?, ?, ?, ?)', (sound.orthographic_transcription,
@@ -102,7 +122,7 @@ def safe_insert_sound(sound):
         return None
     sound_id = None
     if sound.sound_id is not None:
-        con = sqlite3.connect(DB_FILE_PATH)
+        con = get_connection()
         cur = con.cursor()
         for (row,) in cur.execute('SELECT sound_id FROM sound WHERE sound_id = ?', (sound.sound_id,)):
             sound_id = row
@@ -117,7 +137,7 @@ def safe_insert_sound(sound):
 
 def insert_syllable(word_id, ordering):
     log('Entering insert_syllable', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur.execute('INSERT INTO syllable(word_id, ordering) VALUES(?, ?)', (word_id, ordering))
     syllable_id = cur.lastrowid
@@ -129,7 +149,7 @@ def insert_syllable(word_id, ordering):
 
 def insert_syllable_sound(syllable_id, sound_id, ordering):
     log('Entering insert_syllable_sound', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     try:
         with con:
             con.execute('INSERT INTO syllable_sound(syllable_id, sound_id, ordering) VALUES(?, ?, ?)', (syllable_id,
@@ -143,7 +163,7 @@ def insert_syllable_sound(syllable_id, sound_id, ordering):
 
 def insert_word(word, language_id, insert_forms=True):
     log('Entering insert_word', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur2 = con.cursor()
     if not word.word_id:
@@ -189,7 +209,7 @@ def insert_word(word, language_id, insert_forms=True):
 
 def insert_sound_change_rule(sound_change_rule):
     log('Entering insert_sound_change_rule', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur.execute('INSERT INTO sound_change_rule(condition, stage) VALUES(?, ?)',
                 (sound_change_rule.condition, sound_change_rule.stage))
@@ -226,7 +246,7 @@ def safe_insert_sound_change_rule(sound_change_rule):
         return None
     sound_change_rule_id = None
     if sound_change_rule.sound_change_rule_id is not None:
-        con = sqlite3.connect(DB_FILE_PATH)
+        con = get_connection()
         cur = con.cursor()
         for (row,) in cur.execute('SELECT sound_change_rule_id FROM sound_change_rule WHERE sound_change_rule_id = ?',
                                   (sound_change_rule.sound_change_rule_id,)):
@@ -241,7 +261,7 @@ def safe_insert_sound_change_rule(sound_change_rule):
 
 def insert_sound_change_rule_sound(sound_change_rule_id, sound_id, ordering, new_not_old):
     log('Entering insert_sound_change_rule_sound', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     try:
         with con:
             con.execute('INSERT INTO sound_change_rule_sound(sound_change_rule_id, sound_id, ordering, new_not_old) '
@@ -254,7 +274,7 @@ def insert_sound_change_rule_sound(sound_change_rule_id, sound_id, ordering, new
 
 def insert_sound_change_rule_condition_sound(sound_change_rule_id, sound_id, ordering):
     log('Entering insert_sound_change_rule_condition_sound', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     try:
         with con:
             con.execute('INSERT INTO sound_change_rule_condition_sound(sound_change_rule_id, sound_id, ordering) '
@@ -267,7 +287,7 @@ def insert_sound_change_rule_condition_sound(sound_change_rule_id, sound_id, ord
 
 def insert_word_sound_change_rule(word_id, sound_change_rule_id, ordering):
     log('Entering insert_word_sound_change_rule', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     try:
         with con:
             con.execute('INSERT INTO word_sound_change_rule(word_id, sound_change_rule_id, ordering) VALUES(?, ?, ?)',
@@ -281,7 +301,7 @@ def insert_word_sound_change_rule(word_id, sound_change_rule_id, ordering):
 
 def insert_language(language):
     log('Entering insert_language', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     source_language_id = None
     if language.source_language is not None:
@@ -315,7 +335,7 @@ def insert_language(language):
 
 def insert_language_sound(language_id, sound):
     log('Entering insert_language_sound', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     try:
         with con:
             con.execute('INSERT INTO language_sound(language_id, sound_id, frequency, generation_options)'
@@ -329,7 +349,7 @@ def insert_language_sound(language_id, sound):
 
 def insert_language_sound_change_rule(language_id, sound_change_rule_id, ordering):
     log('Entering insert_language_sound_change_rule', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     try:
         with con:
             con.execute('INSERT INTO language_sound_change_rule(language_id, sound_change_rule_id, ordering) '
@@ -342,7 +362,7 @@ def insert_language_sound_change_rule(language_id, sound_change_rule_id, orderin
 
 def insert_word_definition(word_id, language_stage, definition):
     log('Entering insert_word_definition', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     try:
         with con:
             con.execute('INSERT INTO word_definition(word_id, language_stage, definition) '
@@ -355,7 +375,7 @@ def insert_word_definition(word_id, language_stage, definition):
 
 def override_insert_word_definition(word_id, language_stage, definition):
     log('Entering override_insert_word_definition', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur2 = con.cursor()
     cur.execute('DELETE FROM word_definition WHERE word_id = ? AND language_stage = ?', (word_id, language_stage))
@@ -369,7 +389,7 @@ def override_insert_word_definition(word_id, language_stage, definition):
 
 def insert_word_form_rule(word_form_rule, language_id):
     log('Entering insert_word_form_rule', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur.execute('INSERT INTO word_form_rule(name, categories, language_id, original_language_stage, '
                 'obsoleted_language_stage) VALUES(?, ?, ?, ?, ?)',
@@ -395,7 +415,7 @@ def insert_word_form_rule(word_form_rule, language_id):
 
 def insert_word_form_rule_sound_change_rule(word_form_rule_id, sound_change_rule_id, ordering, change_not_base):
     log('Entering insert_word_form_rule_sound_change_rule', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     try:
         with con:
             con.execute('INSERT INTO word_form_rule_sound_change_rule(word_form_rule_id, sound_change_rule_id, '
@@ -411,7 +431,7 @@ def fetch_sound(sound_id):
     log('Entering fetch_sound', 1)
     if sound_id is None:
         return None
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     res = cur.execute('SELECT orthographic_transcription, ipa_transcription, phonotactics_categories, description '
                       'FROM sound WHERE sound_id = ?', (sound_id,))
@@ -430,7 +450,7 @@ def fetch_word(word_id, fetch_source_word_language=True, fetch_forms=True, fetch
         return None
     if caching_on and word_id in word_cache:
         return word_cache[word_id]
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur2 = con.cursor()
     cur3 = con.cursor()
@@ -511,7 +531,7 @@ def fetch_sound_change_rule(sound_change_rule_id):  # TODO can be optimized to u
     log('Entering fetch_sound_change_rule', 1)
     if sound_change_rule_id is None:
         return None
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur2 = con.cursor()
     cur3 = con.cursor()
@@ -547,7 +567,7 @@ def fetch_sound_change_rule(sound_change_rule_id):  # TODO can be optimized to u
 
 def fetch_language_by_name(name, fetch_source_language=True):  # TODO out of date from fetch_langauge
     log('Entering fetch_language_by_name', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur2 = con.cursor()
     cur3 = con.cursor()
@@ -587,7 +607,7 @@ def fetch_language_by_name(name, fetch_source_language=True):  # TODO out of dat
 
 def check_language_by_name(name):
     log('Entering check_language_by_name', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     language_id = None
     for (row,) in cur.execute('SELECT language_id FROM language WHERE name = ?', (name,)):
@@ -601,7 +621,7 @@ def fetch_language(language_id, fetch_source_language=True, fetch_child_language
     log('Entering fetch_language', 1)
     if caching_on and not override_cache and language_id in language_cache:
         return language_cache[language_id]
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur2 = con.cursor()
     cur3 = con.cursor()
@@ -656,7 +676,7 @@ def fetch_language(language_id, fetch_source_language=True, fetch_child_language
 def fetch_all_languages():
     log('Entering fetch_all_languages', 1)
     enable_cache()
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur2 = con.cursor()
     res = cur.execute('SELECT language_id FROM language WHERE source_language_id IS NULL')
@@ -684,7 +704,7 @@ def fetch_word_form_rule(word_form_rule_id):
     log('Entering fetch_word_form_rule', 1)
     if word_form_rule_id is None:
         return None
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur2 = con.cursor()
     res = cur.execute('SELECT name, categories, original_language_stage, obsoleted_language_stage FROM word_form_rule '
@@ -715,7 +735,7 @@ def update_sound(sound):
     if not sound.sound_id:
         log('Sound does not have an ID, cannot update', 4)
         return False
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur.execute('UPDATE sound SET orthographic_transcription = ?, ipa_transcription = ?, phonotactics_categories = ?, '
                 'description = ? WHERE sound_id = ?', (sound.orthographic_transcription,
@@ -734,7 +754,7 @@ def update_language_sound(language_id, sound):
     if not sound.sound_id:
         log('Sound does not have an ID, cannot update', 4)
         return False
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur.execute('UPDATE language_sound SET frequency = ?, generation_options = ? '
                 'WHERE language_id = ? AND sound_id = ?',
@@ -750,7 +770,7 @@ def update_word(word, refresh_sounds=True, refresh_definitions=True):
     if not word.word_id:
         log('Word does not have an ID, cannot update', 4)
         return False
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur2 = con.cursor()
     cur3 = con.cursor()
@@ -793,7 +813,7 @@ def update_language(language):
     if not language.language_id:
         log('Language does not have an ID, cannot update', 4)
         return False
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur.execute('UPDATE language SET name = ?, phonotactics = ? WHERE language_id = ?',
                 (language.name, language.phonotactics, language.language_id))
@@ -808,7 +828,7 @@ def update_sound_change_rule(sound_change_rule, refresh_sounds=True):
     if not sound_change_rule.sound_change_rule_id:
         log('Sound change rule does not have an ID, cannot update', 4)
         return False
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur2 = con.cursor()
     cur3 = con.cursor()
@@ -852,7 +872,7 @@ def update_word_form_rule(word_form_rule, refresh_sound_change_rules=True):
     if not word_form_rule.word_form_rule_id:
         log('Word form rule does not have an ID, cannot update', 4)
         return False
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur2 = con.cursor()
     cur.execute('UPDATE word_form_rule SET name = ?, categories = ?, original_language_stage = ?, '
@@ -885,7 +905,7 @@ def reload_language(language):  # TODO possibly out of date with fetch_langauge 
     log('Entering reload_language', 1)
     language.sound_changes = []
     language.words = []
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     cur2 = con.cursor()
     cur3 = con.cursor()
@@ -922,7 +942,7 @@ def reload_language(language):  # TODO possibly out of date with fetch_langauge 
 
 def get_new_word_id():
     log('Entering get_new_word_id', 1)
-    con = sqlite3.connect(DB_FILE_PATH)
+    con = get_connection()
     cur = con.cursor()
     res = cur.execute('SELECT MAX(word_id) FROM word')
     row = res.fetchone()
