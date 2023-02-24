@@ -357,6 +357,8 @@ class Language:
             language.add_words(self.copy_words_at_stage(language_stage=stage, include_previous_stages=False,
                                                         include_language_sound_changes=False,
                                                         include_all_definitions=True))
+            for form in self.get_forms_added_at_stage(stage):
+                language.add_word_form(form, form.original_language_stage)
             if stage < language_stage:
                 sound_change = copy.copy(self.sound_changes[stage])
                 sound_change.sound_change_rule_id = None
@@ -371,6 +373,8 @@ class Language:
                             self.phonotactics)
         language.add_words(self.copy_words_at_stage(language_stage=language_stage, include_previous_stages=True,
                                                     include_language_sound_changes=False, branch=True))
+        for form in self.get_forms_at_stage(language_stage):
+            language.add_word_form(form, form.original_language_stage)
         language.source_language = self
         language.source_language_stage = language_stage
         self.child_languages.append(language)
