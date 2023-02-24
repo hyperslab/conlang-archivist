@@ -1,11 +1,10 @@
-import random
 import tkinter as tk
 from conarch import db
 from conarch.gui_word_form import WordFormWindow, NewWordFormWindow
 from conarch.gui_sound import NewSoundWindow, SoundSelectWindow, SoundWindow
 from conarch.gui_word import NewWordWindow, WordWindow
 from conarch.gui_sound_change import NewSoundChangeWindow, SoundChangeWindow
-from conarch.gui_language import NewLanguageWindow
+from conarch.gui_language import NewLanguageWindow, CloneLanguageWindow, BranchLanguageWindow, LanguageWindow
 
 
 class Application:
@@ -28,10 +27,6 @@ class Application:
         self.new_language_button = tk.Button(self.language_list_frame, text='Add New Language',
                                              command=self.popup_new_language_window)
 
-        self.new_language_window = None
-        self.new_language_name = tk.StringVar()
-        self.new_language_phonotactics = tk.StringVar()
-        self.new_language_source_stage = tk.StringVar()
         self.current_language = None
 
         self.language_list.grid(row=1, column=1, padx=(4, 0), pady=2)
@@ -152,120 +147,21 @@ class Application:
         self.reload_current_language()
 
     def popup_clone_language_window(self):
-        if not (self.new_language_window is None or not tk.Toplevel.winfo_exists(self.new_language_window)):
-            self.new_language_window.focus_force()
-            return
-
-        self.new_language_window = tk.Toplevel(self.frame)
-
-        self.new_language_name = tk.StringVar()
         iteration = 2
         while self.current_language.name + ' ' + str(iteration) in [lang.name for lang in self.languages]:
             iteration = iteration + 1
-        self.new_language_name.set(self.current_language.name + ' ' + str(iteration))
-        self.new_language_phonotactics = tk.StringVar()
-        self.new_language_phonotactics.set(self.current_language.phonotactics)
-        self.new_language_source_stage = tk.StringVar()
-        self.new_language_source_stage.set(str(self.current_language.get_current_stage()))
-
-        source_language_name_label = tk.Label(self.new_language_window, text='Cloning Language from ' +
-                                                                             self.current_language.name)
-        new_language_name_label = tk.Label(self.new_language_window, text='Enter New Language Name')
-        new_language_name_entry = tk.Entry(self.new_language_window, textvariable=self.new_language_name)
-        new_language_phonotactics_label = tk.Label(self.new_language_window, text='Enter Language Phonotactics')
-        new_language_phonotactics_entry = tk.Entry(self.new_language_window,
-                                                   textvariable=self.new_language_phonotactics)
-        new_language_confirm_button = tk.Button(self.new_language_window, text='Create Language',
-                                                command=self.clone_language)
-        new_language_source_stage_label = tk.Label(self.new_language_window,
-                                                   text='Enter Source Language Stage (0 - ' +
-                                                        str(self.current_language.get_current_stage()) + ')')
-        new_language_source_stage_entry = tk.Entry(self.new_language_window,
-                                                   textvariable=self.new_language_source_stage)
-
-        source_language_name_label.grid(column=1, row=0)
-        new_language_name_label.grid(column=1, row=1)
-        new_language_name_entry.grid(column=1, row=2)
-        new_language_phonotactics_label.grid(column=1, row=3)
-        new_language_phonotactics_entry.grid(column=1, row=4)
-        new_language_source_stage_label.grid(column=1, row=5)
-        new_language_source_stage_entry.grid(column=1, row=6)
-        new_language_confirm_button.grid(column=1, row=7)
-
-        self.new_language_window.mainloop()
-
-    def clone_language(self):
-        source_stage = -1
-        try:
-            source_stage = int(self.new_language_source_stage.get())
-        except ValueError:
-            print('Error parsing new_language_source_stage; using -1 for most recent stage')
-        new_language = self.current_language.copy_language_at_stage(source_stage)
-        new_language.name = self.new_language_name.get()
-        new_language.phonotactics = self.new_language_phonotactics.get()
-        db.insert_language(new_language)
-        self.language_list.insert(len(self.languages), new_language.name)
-        self.languages.append(new_language)
-        self.new_language_window.destroy()
+        clone_language_window = tk.Toplevel(self.frame)
+        CloneLanguageWindow(clone_language_window, self.current_language, self.create_language, iteration=iteration)
 
     def popup_branch_language_window(self):
-        if not (self.new_language_window is None or not tk.Toplevel.winfo_exists(self.new_language_window)):
-            self.new_language_window.focus_force()
-            return
+        branch_language_window = tk.Toplevel(self.frame)
+        BranchLanguageWindow(branch_language_window, self.current_language, self.branch_language)
 
-        self.new_language_window = tk.Toplevel(self.frame)
-
-        self.new_language_name = tk.StringVar()
-        name = self.current_language.name
-        branch_names = ['New ' + name, 'Modern ' + name, name + ' Offshoot', name + ' Branch', 'Regional ' + name,
-                        name + ' Dialect', 'Neo-' + name, name + ' Derivation', 'Colonial ' + name, 'High ' + name,
-                        'Low ' + name, 'Northern ' + name, 'Southern ' + name, 'Eastern ' + name, 'Western ' + name]
-        self.new_language_name.set(random.choice(branch_names))
-        self.new_language_phonotactics = tk.StringVar()
-        self.new_language_phonotactics.set(self.current_language.phonotactics)
-        self.new_language_source_stage = tk.StringVar()
-        self.new_language_source_stage.set(str(self.current_language.get_current_stage()))
-
-        source_language_name_label = tk.Label(self.new_language_window, text='Branching Language from ' +
-                                                                             self.current_language.name)
-        new_language_name_label = tk.Label(self.new_language_window, text='Enter New Language Name')
-        new_language_name_entry = tk.Entry(self.new_language_window, textvariable=self.new_language_name)
-        new_language_phonotactics_label = tk.Label(self.new_language_window, text='Enter Language Phonotactics')
-        new_language_phonotactics_entry = tk.Entry(self.new_language_window,
-                                                   textvariable=self.new_language_phonotactics)
-        new_language_confirm_button = tk.Button(self.new_language_window, text='Create Language',
-                                                command=self.branch_language)
-        new_language_source_stage_label = tk.Label(self.new_language_window,
-                                                   text='Enter Source Language Stage (0 - ' +
-                                                        str(self.current_language.get_current_stage()) + ')')
-        new_language_source_stage_entry = tk.Entry(self.new_language_window,
-                                                   textvariable=self.new_language_source_stage)
-
-        source_language_name_label.grid(column=1, row=0)
-        new_language_name_label.grid(column=1, row=1)
-        new_language_name_entry.grid(column=1, row=2)
-        new_language_phonotactics_label.grid(column=1, row=3)
-        new_language_phonotactics_entry.grid(column=1, row=4)
-        new_language_source_stage_label.grid(column=1, row=5)
-        new_language_source_stage_entry.grid(column=1, row=6)
-        new_language_confirm_button.grid(column=1, row=7)
-
-        self.new_language_window.mainloop()
-
-    def branch_language(self):
-        source_stage = -1
-        try:
-            source_stage = int(self.new_language_source_stage.get())
-        except ValueError:
-            print('Error parsing new_language_source_stage; using -1 for most recent stage')
-        new_language = self.current_language.branch_language_at_stage(source_stage)
-        new_language.name = self.new_language_name.get()
-        new_language.phonotactics = self.new_language_phonotactics.get()
+    def branch_language(self, new_language):
         db.insert_language(new_language)
         self.language_list.insert(self.languages.index(self.current_language) + 1,
                                   ('  ' * new_language.get_branch_depth()) + '↳' + new_language.name)
         self.languages.insert(self.languages.index(self.current_language) + 1, new_language)
-        self.new_language_window.destroy()
 
     def open_language_from_list(self, event):
         language = self.languages[event.widget.curselection()[0]]
@@ -344,79 +240,8 @@ class Application:
         self.open_language(self.current_language)
 
     def popup_open_language(self, language, label=None):
-        if not (self.popup_language_window is None or not tk.Toplevel.winfo_exists(self.popup_language_window)):
-            self.popup_language_window.focus_force()
-            return
-
-        if label is None:
-            label = 'Language Information: ' + language.name
-        else:
-            label = 'Language Information: ' + str(label)
-
-        self.popup_language_window = tk.Toplevel(self.frame)
-
-        language_info_frame = tk.LabelFrame(self.popup_language_window,
-                                            text=label)
-        self.popup_language_sounds = list()
-        language_sound_list_label = tk.Label(master=language_info_frame, text='Sound Inventory')
-        language_sound_list_scrollbar = tk.Scrollbar(master=language_info_frame, orient='vertical')
-        language_sound_list = tk.Listbox(master=language_info_frame, width=18,
-                                         yscrollcommand=language_sound_list_scrollbar.set)
-        language_sound_list_scrollbar.configure(command=language_sound_list.yview)
-        language_sound_list.bind('<Double-1>', self.open_popup_language_sound)
-        self.popup_language_words = list()
-        language_word_list_label = tk.Label(master=language_info_frame, text='Stem Dictionary')
-        language_word_list_scrollbar = tk.Scrollbar(master=language_info_frame, orient='vertical')
-        language_word_list = tk.Listbox(master=language_info_frame, width=20,
-                                        yscrollcommand=language_word_list_scrollbar.set)
-        language_word_list_scrollbar.configure(command=language_word_list.yview)
-        language_word_list.bind('<Double-1>', self.open_popup_language_word)
-        self.popup_language_history = list()
-        language_history_list_label = tk.Label(master=language_info_frame, text='Language History')
-        language_history_list_scrollbar = tk.Scrollbar(master=language_info_frame, orient='vertical')
-        language_history_list = tk.Listbox(master=language_info_frame, width=44,
-                                           yscrollcommand=language_history_list_scrollbar.set)
-        language_history_list_scrollbar.configure(command=language_history_list.yview)
-        language_history_list.bind('<Double-1>', self.open_popup_language_sound_change)
-
-        i = 0
-        for sound in language.modern_phonetic_inventory:
-            sound_name = sound.orthographic_transcription
-            if sound.ipa_transcription is not None:
-                sound_name = sound_name + ' /' + sound.ipa_transcription + '/'
-            language_sound_list.insert(i, sound_name)
-            self.popup_language_sounds.append(sound)
-            i = i + 1
-
-        i = 0
-        for word in language.words:
-            word_stem = word.get_modern_stem_string(include_ipa=True)
-            language_word_list.insert(i, word_stem)
-            self.popup_language_words.append(word)
-            i = i + 1
-
-        i = 0
-        for sound_change in language.sound_changes:
-            history = str(sound_change)
-            history = 'Sound Change: ' + history
-            language_history_list.insert(i, history)
-            self.popup_language_history.append(sound_change)
-            i = i + 1
-
-        language_sound_list_label.grid(row=1, column=1, columnspan=2)
-        language_sound_list.grid(row=2, column=1)
-        language_sound_list_scrollbar.grid(row=2, column=2, sticky='ns')
-        language_word_list_label.grid(row=1, column=3)
-        language_word_list.grid(row=2, column=3)
-        language_word_list_scrollbar.grid(row=2, column=4, sticky='ns')
-        language_history_list_label.grid(row=1, column=5)
-        language_history_list.grid(row=2, column=5)
-        language_history_list_scrollbar.grid(row=2, column=6, sticky='ns')
-        language_info_frame.grid(column=2, row=1, padx=8, pady=6, rowspan=3)
-
-        self.last_opened_popup_language = language
-
-        self.popup_language_window.mainloop()
+        language_window = tk.Toplevel(self.frame)
+        LanguageWindow(language_window, language, label=label)
 
     def popup_current_language_older_stage(self):
         self.popup_open_language(self.current_language.copy_language_at_stage(
@@ -519,9 +344,6 @@ class Application:
     def open_current_language_sound(self, event):
         self.open_sound(self.language_sounds[event.widget.curselection()[0]])
 
-    def open_popup_language_sound(self, event):
-        self.open_sound(self.popup_language_sounds[event.widget.curselection()[0]], allow_edit=False)
-
     def open_word(self, word, allow_edit=True):
         word_window = tk.Toplevel(self.frame)
         WordWindow(word_window, self.current_language, word,
@@ -529,9 +351,6 @@ class Application:
 
     def open_current_language_word(self, event):
         self.open_word(self.language_words[event.widget.curselection()[0]])
-
-    def open_popup_language_word(self, event):
-        self.open_word(self.popup_language_words[event.widget.curselection()[0]], allow_edit=False)
 
     def open_sound_change(self, sound_change, history_stage, allow_edit=True):
         sound_change_window = tk.Toplevel(self.frame)
@@ -543,10 +362,6 @@ class Application:
         self.open_sound_change(self.language_history[event.widget.curselection()[0]],
                                event.widget.curselection()[0])
 
-    def open_popup_language_sound_change(self, event):
-        self.open_sound_change(self.popup_language_history[event.widget.curselection()[0]],
-                               event.widget.curselection()[0], allow_edit=False)
-
     def open_history_item(self, event):
         item = self.language_history[event.widget.curselection()[0]]
         order = event.widget.curselection()[0]
@@ -554,7 +369,7 @@ class Application:
             self.open_sound_change(item, order)
         elif 'WordFormRule' in str(type(item)):
             word_form_window = tk.Toplevel(self.frame)
-            WordFormWindow(master=word_form_window, language=self.current_language, word_form=item,
+            WordFormWindow(word_form_window, language=self.current_language, word_form=item,
                            edit_word_form_command=self.update_edit_word_form)
 
 
