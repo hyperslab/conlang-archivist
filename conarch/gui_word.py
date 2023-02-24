@@ -1,8 +1,8 @@
 import textwrap
 import tkinter as tk
 from tkinter.messagebox import showinfo
-from src import sound_helpers, gui_sound
-from src.word import Word
+from conarch import sound_helpers, gui_sound
+from conarch.word import Word
 
 
 class WordWindow:

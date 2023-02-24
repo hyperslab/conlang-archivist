@@ -1,5 +1,5 @@
 import copy
-from src.sound import Sound
+from conarch.sound import Sound
 
 
 def get_nearby_sound(sequence, i, j, steps=1, backwards=False):

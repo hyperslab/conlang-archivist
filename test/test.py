@@ -1,11 +1,11 @@
 import unittest
 from copy import copy
 
-from src.language import Language
-from src.sound import Sound
-from src.sound_change_rule import SoundChangeRule
-from src.sound_helpers import change_sounds
-from src.word import Word
+from conarch.language import Language
+from conarch.sound import Sound
+from conarch.sound_change_rule import SoundChangeRule
+from conarch.sound_helpers import change_sounds
+from conarch.word import Word
 
 
 # noinspection SpellCheckingInspection

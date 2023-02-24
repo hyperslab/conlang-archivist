@@ -1,11 +1,11 @@
 import random
 import tkinter as tk
-from src import db
-from src.gui_word_form import WordFormWindow, NewWordFormWindow
-from src.gui_sound import NewSoundWindow, SoundSelectWindow, SoundWindow
-from src.gui_word import NewWordWindow, WordWindow
-from src.gui_sound_change import NewSoundChangeWindow, SoundChangeWindow
-from src.gui_language import NewLanguageWindow
+from conarch import db
+from conarch.gui_word_form import WordFormWindow, NewWordFormWindow
+from conarch.gui_sound import NewSoundWindow, SoundSelectWindow, SoundWindow
+from conarch.gui_word import NewWordWindow, WordWindow
+from conarch.gui_sound_change import NewSoundChangeWindow, SoundChangeWindow
+from conarch.gui_language import NewLanguageWindow
 
 
 class Application:

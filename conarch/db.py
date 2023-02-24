@@ -1,10 +1,10 @@
 import copy
 import sqlite3
-from src.sound import Sound
-from src.word import Word
-from src.sound_change_rule import SoundChangeRule
-from src.language import Language
-from src.word_form_rule import WordFormRule
+from conarch.sound import Sound
+from conarch.word import Word
+from conarch.sound_change_rule import SoundChangeRule
+from conarch.language import Language
+from conarch.word_form_rule import WordFormRule
 import os
 import configparser
 

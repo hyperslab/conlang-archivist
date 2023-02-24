@@ -1,7 +1,7 @@
 import copy
-from src import sound_helpers
+from conarch import sound_helpers
 import itertools
-from src import id_assigner
+from conarch import id_assigner
 
 
 class Word:

@@ -1,5 +1,5 @@
 import tkinter as tk
-from src.sound import Sound
+from conarch.sound import Sound
 from tkinter.messagebox import showinfo
 
 

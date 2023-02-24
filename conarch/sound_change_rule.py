@@ -1,4 +1,4 @@
-from src import sound_helpers
+from conarch import sound_helpers
 
 
 class SoundChangeRule:

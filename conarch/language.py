@@ -1,5 +1,5 @@
 import copy
-from src.word import Word
+from conarch.word import Word
 import random
 
 

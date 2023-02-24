@@ -1,8 +1,8 @@
-from src.sound_change_rule import SoundChangeRule
-from src.sound import Sound
-from src.language import Language
-from src import db
-from src.word_form_rule import WordFormRule
+from conarch.sound_change_rule import SoundChangeRule
+from conarch.sound import Sound
+from conarch.language import Language
+from conarch import db
+from conarch.word_form_rule import WordFormRule
 
 
 def generate_koa():

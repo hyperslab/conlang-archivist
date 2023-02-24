@@ -1,8 +1,8 @@
 import copy
 import tkinter as tk
-from src import gui_sound
-from src.word_form_rule import WordFormRule
-from src.sound_change_rule import SoundChangeRule
+from conarch import gui_sound
+from conarch.word_form_rule import WordFormRule
+from conarch.sound_change_rule import SoundChangeRule
 from tkinter.messagebox import showinfo
 
 
