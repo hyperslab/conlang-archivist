@@ -5,6 +5,7 @@ from conarch import db
 from conarch.word_form_rule import WordFormRule
 
 
+# noinspection SpellCheckingInspection
 def generate_koa():
     koa_sounds = list()
 
@@ -163,12 +164,12 @@ def add_generated_words(language):
 
 
 if not db.check_language_by_name("Ko'a"):
-    koa_language = generate_koa()
-    db.insert_language(koa_language)
-    add_generated_words(koa_language)
+    koa = generate_koa()
+    db.insert_language(koa)
+    add_generated_words(koa)
     print('-'*32)
-    koa_language.print_all_word_forms(include_ipa=True, include_base_stem=True)
+    koa.print_all_word_forms(include_ipa=True, include_base_stem=True)
 else:
-    koa_language = db.fetch_language_by_name("Ko'a")
+    koa = db.fetch_language_by_name("Ko'a")
     print('-'*32)
-    koa_language.print_all_word_forms(include_ipa=True, include_base_stem=True)
+    koa.print_all_word_forms(include_ipa=True, include_base_stem=True)
