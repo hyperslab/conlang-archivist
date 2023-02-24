@@ -6,26 +6,8 @@ from conarch.sound_change_rule import SoundChangeRule
 from conarch.language import Language
 from conarch.word_form_rule import WordFormRule
 import os
-import configparser
-import platformdirs
+import conarch.config as config
 
-ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), '..'))
-CONFIG_DIRECTORY = platformdirs.user_config_dir('ConlangArchivist', appauthor=False, roaming=True)
-if not os.path.exists(CONFIG_DIRECTORY):
-    os.makedirs(CONFIG_DIRECTORY)
-CONFIG_FILE_PATH = os.path.join(CONFIG_DIRECTORY, 'config.ini')
-if not os.path.isfile(CONFIG_FILE_PATH):
-    DB_DIRECTORY = platformdirs.user_data_dir('ConlangArchivist', appauthor=False, roaming=True)  # default
-    config = configparser.ConfigParser()
-    config['Database'] = {}
-    config['Database']['Directory'] = DB_DIRECTORY
-    with open(CONFIG_FILE_PATH, 'w') as configfile:
-        config.write(configfile)
-else:
-    config = configparser.ConfigParser()
-    config.read(CONFIG_FILE_PATH)
-    DB_DIRECTORY = config['Database']['Directory']
-DB_FILE_PATH = os.path.join(DB_DIRECTORY, 'languages.db')
 LOGGING_LEVEL = 2  # 1 = debug, 2 = info, 3 = warning, 4 = error, 5 = critical
 
 language_cache = {}
@@ -57,13 +39,13 @@ def disable_cache():
 
 
 def get_connection():
-    return sqlite3.connect(DB_FILE_PATH)
+    return sqlite3.connect(config.DB_FILE_PATH)
 
 
 def create_db():
     log('Entering create_db', 2)
-    if not os.path.exists(DB_DIRECTORY):
-        os.makedirs(DB_DIRECTORY)
+    if not os.path.exists(config.DB_DIRECTORY):
+        os.makedirs(config.DB_DIRECTORY)
     con = get_connection()
     con.execute('CREATE TABLE sound(sound_id INTEGER PRIMARY KEY, orthographic_transcription, ipa_transcription, '
                 'phonotactics_categories, description)')
@@ -99,11 +81,11 @@ def create_db():
 
 def delete_db():
     log('Entering delete_db', 3)
-    if not os.path.isfile(DB_FILE_PATH):
+    if not os.path.isfile(config.DB_FILE_PATH):
         log('Did not find db to delete; exiting delete_db', 3)
         return
     try:
-        os.remove(DB_FILE_PATH)
+        os.remove(config.DB_FILE_PATH)
     except PermissionError:
         log('Did not have permission to delete db', 4)
     log('Exiting delete_db', 3)
