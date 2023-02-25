@@ -285,6 +285,234 @@ class TestSoundHelpers(unittest.TestCase):
         new_sequence = change_sounds(old_sequence, [b], [a], condition='!C_')
         self.assertEqual(target_sequence, new_sequence)
 
+    def test_change_sounds_20(self):
+        """
+        Test a condition that contains a negation following an underscore.
+
+        'cbba' to 'cbaa' via 'b > a /_!C'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        old_sequence = [[c, b, b, a]]
+        target_sequence = [[c, b, a, a]]
+        new_sequence = change_sounds(old_sequence, [b], [a], condition='_!C')
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_21(self):
+        """
+        Test a basic sound change that passes a Sound for sounds_before and
+        sounds_after instead of a List of one Sound each.
+
+        'ab' to 'aa' via 'b > a'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        old_sequence = [[a, b]]
+        target_sequence = [[a, a]]
+        new_sequence = change_sounds(old_sequence, b, a)
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_22(self):
+        """
+        Test changing a sound into nothing.
+
+        'ab' to 'a' via 'b > Ø'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        old_sequence = [[a, b]]
+        target_sequence = [[a]]
+        new_sequence = change_sounds(old_sequence, b, None)
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_23(self):
+        """
+        Test changing multiple sounds into nothing.
+
+        'abc' to 'a' via 'bc > Ø'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        old_sequence = [[a, b, c]]
+        target_sequence = [[a]]
+        new_sequence = change_sounds(old_sequence, [b, c], None)
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_24(self):
+        """
+        Test changing every sound in a sequence into nothing.
+
+        'abc' to 'Ø' via 'abc > Ø'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        old_sequence = [[a, b, c]]
+        target_sequence = [[]]
+        new_sequence = change_sounds(old_sequence, [a, b, c], None)
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_25(self):
+        """
+        Test a "suffix" type sound change that adds a Sound to the end of a
+        sequence.
+
+        'ab' to 'abc' via 'Ø > c /_#'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        old_sequence = [[a, b]]
+        target_sequence = [[a, b, c]]
+        new_sequence = change_sounds(old_sequence, None, [c], condition='_#')
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_26(self):
+        """
+        Test a "prefix" type sound change that adds a Sound to the beginning
+        of a sequence.
+
+        'ab' to 'cab' via 'Ø > c /#_'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        old_sequence = [[a, b]]
+        target_sequence = [[c, a, b]]
+        new_sequence = change_sounds(old_sequence, None, [c], condition='#_')
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_27(self):
+        """
+        Test an "infix" type sound change that inserts a Sound into the middle
+        of a sequence based on a specific condition.
+
+        'ab' to 'acb' via 'Ø > c /V_C'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        old_sequence = [[a, b]]
+        target_sequence = [[a, c, b]]
+        new_sequence = change_sounds(old_sequence, None, [c], condition='V_C')
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_28(self):
+        """
+        Test inserting a Sound in between every other Sound in a sequence,
+        as well as at the beginning and end, by setting sounds_before to None
+        and not specifying a condition.
+
+        'aba' to 'cacbcac' via 'Ø > c'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        old_sequence = [[a, b, a]]
+        target_sequence = [[c, a, c, b, c, a, c]]
+        new_sequence = change_sounds(old_sequence, None, [c])
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_29(self):
+        """
+        Test inserting a sequence of two sounds in between every other Sound
+        in a sequence,  as well as at the beginning and end, by setting
+        sounds_before to None and not specifying a condition.
+
+        'aba' to 'cdacdbcdacd' via 'Ø > c'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        d = Sound('d', phonotactics_categories='C')
+        old_sequence = [[a, b, a]]
+        target_sequence = [[c, d, a, c, d, b, c, d, a, c,  d]]
+        new_sequence = change_sounds(old_sequence, None, [c, d])
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_30(self):
+        """
+        Test an "infix" type sound change that inserts a sequence of two
+        sounds into the middle of a sequence based on a specific
+        condition.
+
+        'ab' to 'acdb' via 'Ø > cd /V_C'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        d = Sound('d', phonotactics_categories='C')
+        old_sequence = [[a, b]]
+        target_sequence = [[a, c, d, b]]
+        new_sequence = change_sounds(old_sequence, None, [c, d], condition='V_C')
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_31(self):
+        """
+        Test a "prefix" type sound change that adds a sequence of two sounds
+        to the beginning of a sequence.
+
+        'ab' to 'cdab' via 'Ø > cd /#_'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        d = Sound('d', phonotactics_categories='C')
+        old_sequence = [[a, b]]
+        target_sequence = [[c, d, a, b]]
+        new_sequence = change_sounds(old_sequence, None, [c, d], condition='#_')
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_32(self):
+        """
+        Test a "suffix" type sound change that adds a sequence of two sounds
+        to the end of a sequence.
+
+        'ab' to 'abcd' via 'Ø > cd /_#'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        d = Sound('d', phonotactics_categories='C')
+        old_sequence = [[a, b]]
+        target_sequence = [[a, b, c, d]]
+        new_sequence = change_sounds(old_sequence, None, [c, d], condition='_#')
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_33(self):
+        """
+        Test a sound change that converts multiple sounds into something and
+        contains subsequences of partial matches for the target sounds as well
+        as a full match.
+
+        'abaabaaab' to 'abaabcb' via 'aaa > c'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        old_sequence = [[a, b, a, a, b, a, a, a, b]]
+        target_sequence = [[a, b, a, a, b, c, b]]
+        new_sequence = change_sounds(old_sequence, [a, a, a], [c])
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_34(self):
+        """
+        Test a sound change that converts multiple sounds into something and
+        contains a subsequence of partial matches for the target sounds at the
+        end of the sequence as well as a full match.
+
+        'baaabaa' to 'bcbaa' via 'aaa > c'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        old_sequence = [[b, a, a, a, b, a, a]]
+        target_sequence = [[b, c, b, a, a]]
+        new_sequence = change_sounds(old_sequence, [a, a, a], [c])
+        self.assertEqual(target_sequence, new_sequence)
+
 
 # noinspection SpellCheckingInspection
 class TestWord(unittest.TestCase):
