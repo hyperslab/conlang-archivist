@@ -148,8 +148,8 @@ def change_sounds(sequence, sounds_before, sounds_after, condition='', condition
                         match_count = 0
                         match_locations = list()
                         match_sounds = list()
-                    if none_target is not None:  # TODO does this always preserve syllable bounds?
-                        new_syllable.append(none_target)
+                if none_target is not None:  # TODO does this always preserve syllable bounds?
+                    new_syllable.append(none_target)
             j += 1
         new_stem.append(new_syllable)
         i += 1
