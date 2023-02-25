@@ -121,9 +121,9 @@ def change_sounds(sequence, sounds_before, sounds_after, condition='', condition
                 if not condition:  # no condition specified: replace sounds automatically
                     if sounds_after is not None:
                         new_syllable += copy.deepcopy(sounds_after)
-                        match_count = 0
-                        match_locations = list()
-                        match_sounds = list()
+                    match_count = 0
+                    match_locations = list()
+                    match_sounds = list()
                 else:  # condition specified: check condition before replacing sounds
                     match_i, match_j = match_locations[0]
                     last_i, last_j = i, j
