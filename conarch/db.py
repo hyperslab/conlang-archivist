@@ -91,6 +91,11 @@ def delete_db():
     log('Exiting delete_db', 3)
 
 
+def check_create_db():
+    if not os.path.isfile(config.DB_FILE_PATH):
+        create_db()
+
+
 def insert_sound(sound):
     log('Entering insert_sound', 1)
     con = get_connection()

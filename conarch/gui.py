@@ -12,6 +12,8 @@ class Application:
         self.master = master
         self.frame = tk.Frame(self.master)
 
+        db.check_create_db()
+
         self.language_list_frame = tk.LabelFrame(self.frame, text='Choose a Language')
         self.languages = db.fetch_all_languages()
         self.language_list_scrollbar = tk.Scrollbar(self.language_list_frame, orient='vertical')
