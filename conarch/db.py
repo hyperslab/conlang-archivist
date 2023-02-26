@@ -165,11 +165,13 @@ def insert_word(word, language_id, insert_forms=True):
     cur2 = con.cursor()
     if not word.word_id:
         word.word_id = get_new_word_id()
+    source_word_id = word.source_word.word_id if word.source_word else None
+    stem_word_id = word.stem_word.word_id if word.stem_word else None
     cur.execute('INSERT INTO word(word_id, categories, language_id, original_language_stage, '
                 'obsoleted_language_stage, source_word_id, source_word_language_stage, stem_word_id, word_form_name, '
                 'stem_word_language_stage) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 (word.word_id, word.categories, language_id, word.original_language_stage,
-                 word.obsoleted_language_stage, word.source_word_id, word.source_word_language_stage, word.stem_word_id,
+                 word.obsoleted_language_stage, source_word_id, word.source_word_language_stage, stem_word_id,
                  word.word_form_name, word.stem_word_language_stage))
     con.commit()
     if word.base_stem is not None:
@@ -197,7 +199,6 @@ def insert_word(word, language_id, insert_forms=True):
     con.commit()
     if insert_forms:
         for form_word in word.word_forms:
-            form_word.stem_word_id = word.word_id
             insert_word(form_word, language_id, insert_forms=insert_forms)
     con.close()
     log('Exiting insert_word', 1)
@@ -441,7 +442,7 @@ def fetch_sound(sound_id):
     return sound
 
 
-def fetch_word(word_id, fetch_source_word_language=True, fetch_forms=True, fetch_stem_word_language=True):
+def fetch_word(word_id, fetch_forms=True):
     log('Entering fetch_word', 1)  # TODO can be optimized to use one select and not call fetch_sound
     if word_id is None:
         return None
@@ -452,9 +453,7 @@ def fetch_word(word_id, fetch_source_word_language=True, fetch_forms=True, fetch
     cur2 = con.cursor()
     cur3 = con.cursor()
     cur4 = con.cursor()
-    cur5 = con.cursor()
     cur6 = con.cursor()
-    cur7 = con.cursor()
     cur8 = con.cursor()
     res = cur.execute('SELECT categories, original_language_stage, obsoleted_language_stage, source_word_id, '
                       'source_word_language_stage, stem_word_id, word_form_name, stem_word_language_stage, language_id '
@@ -489,23 +488,10 @@ def fetch_word(word_id, fetch_source_word_language=True, fetch_forms=True, fetch
     word.obsoleted_language_stage = obsoleted_language_stage
     word.word_form_name = word_form_name if word_form_name else None
     if source_word_id:
-        word.source_word_id = source_word_id
+        word.source_word = fetch_word(source_word_id, fetch_forms=fetch_forms)
         word.source_word_language_stage = source_word_language_stage
-        if fetch_source_word_language:
-            res = cur5.execute('SELECT language_id FROM word WHERE word_id = ?', (source_word_id,))
-            source_language_id, = res.fetchone()
-            log('Caching: ' + str(caching_on) + 'Present: ' + str(source_language_id in language_cache), 1)
-            if caching_on and source_language_id in language_cache:  # TODO do this without cache without infinite loop
-                word.source_word_language = fetch_language(source_language_id)
     if stem_word_id:
-        word.stem_word_id = stem_word_id
         word.stem_word_language_stage = stem_word_language_stage
-        if fetch_stem_word_language:
-            res = cur7.execute('SELECT language_id FROM word WHERE word_id = ?', (stem_word_id,))
-            stem_language_id, = res.fetchone()
-            log('Caching: ' + str(caching_on) + 'Present: ' + str(stem_language_id in language_cache), 1)
-            if caching_on and stem_language_id in language_cache:  # TODO do this without cache without infinite loop
-                word.stem_word_language = fetch_language(stem_language_id)
     res = cur3.execute('SELECT sound_change_rule_id FROM word_sound_change_rule WHERE word_id = ?', (word_id,))
     for sound_change_rule_id, in res:
         word.word_sound_changes.append(fetch_sound_change_rule(sound_change_rule_id))
@@ -515,9 +501,8 @@ def fetch_word(word_id, fetch_source_word_language=True, fetch_forms=True, fetch
     if fetch_forms:
         res = cur6.execute('SELECT word_id FROM word WHERE stem_word_id = ?', (word_id,))
         for (word_form_id,) in res:
-            form_word = fetch_word(word_form_id, fetch_source_word_language=fetch_source_word_language,
-                                   fetch_forms=fetch_forms)
-            form_word.stem_word_id = word_id
+            form_word = fetch_word(word_form_id, fetch_forms=fetch_forms)
+            form_word.stem_word = word
             word.word_forms.append(form_word)
     con.close()
     log('Exiting fetch_word', 1)

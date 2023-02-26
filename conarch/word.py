@@ -42,40 +42,34 @@ class Word:
         self.original_language_stage = original_language_stage  # the stage the word was added to its language
         self.obsoleted_language_stage = -1  # the stage the word was removed from its language
         self.definitions = dict()  # [stage] = definition
-        self.source_word_id = None  # only populated if this word is derived from another word
-        self.source_word_language = None  # only populated if this word is derived from another word
+        self.source_word = None  # only populated if this word is derived from another word
         self.source_word_language_stage = None  # only populated if this word is derived from another word
         self.word_forms = list()  # list of child words that represent conjugations etc. of this word
-        self.stem_word_id = None  # only populated if this is a form of another word
-        self.stem_word_language = None  # only populated if this is a form of another word
+        self.stem_word = None  # only populated if this is a form of another word
         self.stem_word_language_stage = None  # only populated if this is a form of another word
         self.word_form_name = None  # only populated if this is a form of another word
         self.copied_from = None  # not saved to db, only for language.copy_words functions
 
     def get_base_stem(self):
         if self.is_word_form():
-            return self.stem_word_language.copy_word_at_stage(self.stem_word_id,
-                                                              self.stem_word_language_stage).get_modern_stem()
+            return self.stem_word.get_stem_at_stage(self.stem_word_language_stage)
         elif not self.has_source_word():
             return self.base_stem
         else:
-            return self.source_word_language.copy_word_at_stage(self.source_word_id,
-                                                                self.source_word_language_stage).get_modern_stem()
+            return self.source_word.get_stem_at_stage(self.source_word_language_stage)
 
-    def set_as_branch(self, source_word, source_word_language, source_word_language_stage):
-        self.source_word_id = source_word.word_id
-        self.source_word_language = source_word_language
+    def set_as_branch(self, source_word, source_word_language_stage):
+        self.source_word = source_word
         self.source_word_language_stage = source_word_language_stage
         self.base_stem = None
 
-    def add_form_word(self, form_word, language, stage=-1):
-        form_word.stem_word_id = self.word_id
-        form_word.stem_word_language = language
+    def add_form_word(self, form_word, stage=-1):
+        form_word.stem_word = self
         form_word.stem_word_language_stage = max(stage, self.original_language_stage)
         self.word_forms.append(form_word)
         return form_word
 
-    def add_form_from_rule(self, word_form, language):
+    def add_form_from_rule(self, word_form):
         form_word = Word(None, self.categories, max(word_form.original_language_stage, self.original_language_stage))
         form_word.word_form_name = word_form.name
         if self.obsoleted_language_stage > -1 < word_form.obsoleted_language_stage:
@@ -90,13 +84,13 @@ class Word:
         form_word.word_sound_changes = copy.copy(self.word_sound_changes)
         for conjugation_rule in word_form.get_adjusted_rules():  # forms have a None base stem and are calculated on the
             form_word.add_word_sound_change(conjugation_rule)  # fly; this is where the rules live
-        return self.add_form_word(form_word, language, word_form.original_language_stage)
+        return self.add_form_word(form_word, word_form.original_language_stage)
 
     def has_source_word(self):
-        return True if self.source_word_id else False
+        return True if self.source_word else False  # not a boolean so this is fine
 
     def is_word_form(self):
-        return True if self.word_form_name else False
+        return True if self.word_form_name else False  # not a boolean so this is fine
 
     def __str__(self):
         return self.get_modern_stem_string(include_ipa=False)
@@ -178,10 +172,11 @@ class Word:
     def sound_changes_at_stage(self, stage):
         return [s for s in self.all_sound_changes() if s.stage <= stage]
 
-    def get_base_stem_string(self, include_ipa=False):
+    @staticmethod
+    def get_stem_string(stem, include_ipa=False):
         orthography = ''
         ipa = ''
-        for syllable in self.get_base_stem():
+        for syllable in stem:
             for s in syllable:
                 orthography = orthography + s.orthographic_transcription
                 if include_ipa:
@@ -190,6 +185,9 @@ class Word:
             return orthography + ' /' + ipa + '/'
         else:
             return orthography
+
+    def get_base_stem_string(self, include_ipa=False):
+        return self.get_stem_string(self.get_base_stem(), include_ipa=include_ipa)
 
     def print_base_stem(self, include_ipa=False):
         print(self.get_base_stem_string(include_ipa=include_ipa))
@@ -202,21 +200,23 @@ class Word:
         return modern_stem
 
     def get_modern_stem_string(self, include_ipa=False):
-        orthography = ''
-        ipa = ''
-        modern_stem = self.get_modern_stem()
-        for syllable in modern_stem:
-            for s in syllable:
-                orthography = orthography + s.orthographic_transcription
-                if include_ipa:
-                    ipa = ipa + s.ipa_transcription
-        if include_ipa and ipa:
-            return orthography + ' /' + ipa + '/'
-        else:
-            return orthography
+        return self.get_stem_string(self.get_modern_stem(), include_ipa=include_ipa)
 
     def print_modern_stem(self, include_ipa=False):
         print(self.get_modern_stem_string(include_ipa=include_ipa))
+
+    def get_stem_at_stage(self, stage):
+        stage_stem = copy.deepcopy(self.get_base_stem())
+        for sound_change in self.sound_changes_at_stage(stage):
+            stage_stem = sound_helpers.change_sounds(stage_stem, sound_change.old_sounds, sound_change.new_sounds,
+                                                     sound_change.condition, sound_change.condition_sounds)
+        return stage_stem
+
+    def get_stem_string_at_stage(self, stage, include_ipa=False):
+        return self.get_stem_string(self.get_stem_at_stage(stage), include_ipa=include_ipa)
+
+    def print_stem_at_stage(self, stage, include_ipa=False):
+        print(self.get_stem_string_at_stage(stage, include_ipa=include_ipa))
 
     def get_form(self, form_name):
         if form_name == 'Stem':

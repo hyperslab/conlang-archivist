@@ -183,8 +183,9 @@ class Language:
                 form_words.append(self.apply_form_to_word(word_form, word.copied_from))
         return form_words
 
-    def apply_form_to_word(self, word_form, word):
-        return word.add_form_from_rule(word_form, language=self)
+    @staticmethod
+    def apply_form_to_word(word_form, word):
+        return word.add_form_from_rule(word_form)
 
     def print_all_word_forms(self, include_ipa=False, include_base_stem=False):
         for word in self.words:
@@ -221,7 +222,7 @@ class Language:
                     if not preserve_ids:
                         new_word.word_id = None
                     if branch:
-                        new_word.set_as_branch(word, self, language_stage)
+                        new_word.set_as_branch(word, language_stage)
                     new_word.copied_from = word
                     stage_words.append(new_word)
             else:
@@ -230,7 +231,7 @@ class Language:
                     if not preserve_ids:
                         new_word.word_id = None
                     if branch:
-                        new_word.set_as_branch(word, self, language_stage)
+                        new_word.set_as_branch(word, language_stage)
                     new_word.copied_from = word
                     stage_words.append(new_word)
 
