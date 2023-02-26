@@ -177,31 +177,14 @@ class Language:
         if use_current_stage:
             word_form.original_language_stage = self.get_current_stage()
         self.word_forms.append(word_form)
+        form_words = []
         for word in self.copy_words_at_stage(word_form.original_language_stage, include_all_definitions=True):
             if any(category in word.categories for category in word_form.categories):
-                self.apply_form_to_word(word_form, word, word.copied_from)
+                form_words.append(self.apply_form_to_word(word_form, word.copied_from))
+        return form_words
 
-    def apply_form_to_word(self, word_form, word, original_word=None):
-        if original_word is None:  # if you're applying to a copy, this is the original
-            original_word = word
-        form_word = Word(None, word.categories, max(word_form.original_language_stage, word.original_language_stage))
-        form_word.word_form_name = word_form.name
-        if word.obsoleted_language_stage > -1 < word_form.obsoleted_language_stage:
-            form_word.obsoleted_language_stage = min(word.obsoleted_language_stage,
-                                                     word_form.obsoleted_language_stage)
-        else:  # little trick to use whichever is not -1, or -1 if they both are, since it will never be < -1
-            form_word.obsoleted_language_stage = max(word.obsoleted_language_stage,
-                                                     word_form.obsoleted_language_stage)
-        for stage, definition in word.definitions.items():
-            form_word.add_definition(word_form.name + ' form of a word meaning: ' + definition, stage)
-        form_word.language_sound_changes = copy.copy(word.language_sound_changes)
-        form_word.word_sound_changes = copy.copy(word.word_sound_changes)
-        for conjugation_rule in word_form.get_adjusted_rules():  # forms have a None base stem and are calculated on the
-            form_word.add_word_sound_change(conjugation_rule)    # fly; this is where the rules live
-        form_word.stem_word_id = original_word.word_id           # and this is what the rules apply to
-        form_word.stem_word_language = self
-        form_word.stem_word_language_stage = max(word_form.original_language_stage, word.original_language_stage)
-        original_word.word_forms.append(form_word)
+    def apply_form_to_word(self, word_form, word):
+        return word.add_form_from_rule(word_form, language=self)
 
     def print_all_word_forms(self, include_ipa=False, include_base_stem=False):
         for word in self.words:

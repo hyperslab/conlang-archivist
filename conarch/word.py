@@ -68,6 +68,30 @@ class Word:
         self.source_word_language_stage = source_word_language_stage
         self.base_stem = None
 
+    def add_form_word(self, form_word, language, stage=-1):
+        form_word.stem_word_id = self.word_id
+        form_word.stem_word_language = language
+        form_word.stem_word_language_stage = max(stage, self.original_language_stage)
+        self.word_forms.append(form_word)
+        return form_word
+
+    def add_form_from_rule(self, word_form, language):
+        form_word = Word(None, self.categories, max(word_form.original_language_stage, self.original_language_stage))
+        form_word.word_form_name = word_form.name
+        if self.obsoleted_language_stage > -1 < word_form.obsoleted_language_stage:
+            form_word.obsoleted_language_stage = min(self.obsoleted_language_stage,
+                                                     word_form.obsoleted_language_stage)
+        else:  # little trick to use whichever is not -1, or -1 if they both are, since it will never be < -1
+            form_word.obsoleted_language_stage = max(self.obsoleted_language_stage,
+                                                     word_form.obsoleted_language_stage)
+        for stage, definition in self.definitions.items():
+            form_word.add_definition(word_form.name + ' form of a word meaning: ' + definition, stage)
+        form_word.language_sound_changes = copy.copy(self.language_sound_changes)
+        form_word.word_sound_changes = copy.copy(self.word_sound_changes)
+        for conjugation_rule in word_form.get_adjusted_rules():  # forms have a None base stem and are calculated on the
+            form_word.add_word_sound_change(conjugation_rule)  # fly; this is where the rules live
+        return self.add_form_word(form_word, language, word_form.original_language_stage)
+
     def has_source_word(self):
         return True if self.source_word_id else False
 

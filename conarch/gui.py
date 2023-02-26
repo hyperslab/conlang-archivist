@@ -330,8 +330,10 @@ class Application:
         return
 
     def create_word_form(self, word_form):
-        self.current_language.add_word_form(word_form)
+        new_words = self.current_language.add_word_form(word_form)
         db.insert_word_form_rule(word_form, self.current_language.language_id)
+        for word in new_words:
+            db.insert_word(word, self.current_language.language_id)  # these should all have a stem word id by now
         self.reload_current_language()
 
     def update_edit_word_form(self, word_form):
