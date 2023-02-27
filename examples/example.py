@@ -101,12 +101,18 @@ def generate_koa():
     genitive.add_suffix_rule([koa_tejective, koa_a])
     koa_language.add_word_form(genitive)
     genitive_plural = WordFormRule('Genitive Plural', 'N')  # base forms: ['Plural']
+    genitive_plural.add_suffix_rule([koa_kh, koa_a], 'V')  # from plural
+    genitive_plural.add_suffix_rule([koa_e, koa_kh, koa_a], 'C')  # from plural
     genitive_plural.add_suffix_rule([koa_tejective, koa_a])
     koa_language.add_word_form(genitive_plural)
     inalienable_genitive = WordFormRule('Inalienable Genitive', 'N')  # base forms: ['Genitive']
+    inalienable_genitive.add_suffix_rule([koa_tejective, koa_a])  # from genitive
     inalienable_genitive.add_suffix_rule([koa_c])
     koa_language.add_word_form(inalienable_genitive)
     inalienable_genitive_plural = WordFormRule('Inalienable Genitive Plural', 'N')  # base forms: ['Genitive', 'Plural']
+    inalienable_genitive_plural.add_suffix_rule([koa_kh, koa_a], 'V')  # from genitive plural
+    inalienable_genitive_plural.add_suffix_rule([koa_e, koa_kh, koa_a], 'C')  # from genitive plural
+    inalienable_genitive_plural.add_suffix_rule([koa_tejective, koa_a])  # from genitive plural
     inalienable_genitive_plural.add_suffix_rule([koa_c])
     koa_language.add_word_form(inalienable_genitive_plural)
     koa_language.apply_sound_change(SoundChangeRule(koa_m, koa_n, '_#'))
