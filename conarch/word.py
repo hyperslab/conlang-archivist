@@ -83,7 +83,8 @@ class Word:
         form_word.language_sound_changes = copy.copy(self.language_sound_changes)
         form_word.word_sound_changes = copy.copy(self.word_sound_changes)
         for conjugation_rule in word_form.get_adjusted_rules():  # forms have a None base stem and are calculated on the
-            form_word.add_word_sound_change(conjugation_rule)  # fly; this is where the rules live
+            form_word.add_word_sound_change(conjugation_rule)  # fly; the rules are located in the word sound changes
+            conjugation_rule.stage = form_word.original_language_stage
         return self.add_form_word(form_word, word_form.original_language_stage)
 
     def has_source_word(self):

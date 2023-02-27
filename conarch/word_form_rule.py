@@ -1,3 +1,5 @@
+import copy
+
 from conarch.sound_change_rule import SoundChangeRule
 from conarch import sound_helpers
 
@@ -52,7 +54,8 @@ class WordFormRule:
 
     def get_adjusted_rules(self, stage=-1):  # TODO apply sound changes to rules
         for sound_change in self.base_form_rules:
-            yield sound_change
+            sound_change.sound_change_rule_id = None  # reset id here or the db save/load won't preserve them separately
+            yield copy.copy(sound_change)
 
     def get_adjusted_rule_strings(self, stage=-1):
         for sound_change in self.get_adjusted_rules(stage=stage):
