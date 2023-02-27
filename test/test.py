@@ -772,6 +772,81 @@ class TestWord(unittest.TestCase):
         self.assertEqual(self.abacus.get_modern_stem(),
                          [[self.a_ae], [self.b, self.a_schwa], [self.c_k, self.u_schwa, self.t]])
 
+    def test_word_22(self):
+        """
+        Test that adding a definition to a Word causes it to be the definition
+        for the current stage of the Word.
+        """
+        self.abacus.add_definition('A tool for performing calculations.', self.abacus.get_current_stage())
+        self.assertEqual(self.abacus.get_definition_at_stage(self.abacus.get_current_stage()),
+                         'A tool for performing calculations.')
+
+    def test_word_23(self):
+        """
+        Test that a Word that has had no definitions added to it will not be
+        considered defined at its current stage.
+        """
+        self.assertFalse(self.abacus.has_definition_at_stage(self.abacus.get_current_stage()))
+
+    def test_word_24(self):
+        """
+        Test that a Word that has had one definition added to it will be
+        considered defined at its current stage.
+        """
+        self.abacus.add_definition('A tool for performing calculations.', self.abacus.get_current_stage())
+        self.assertTrue(self.abacus.has_definition_at_stage(self.abacus.get_current_stage()))
+
+    def test_word_25(self):
+        """
+        Test that a Word that has definitions at multiple stages can access
+        them properly by stage.
+        """
+        self.abacus.add_definition('A tool for performing calculations.', 0)
+        self.abacus.add_language_sound_change(self.unschwa_u)
+        self.abacus.add_definition('An old tool for performing calculations.', 1)
+        self.assertEqual(self.abacus.get_definition_at_stage(0), 'A tool for performing calculations.')
+        self.assertEqual(self.abacus.get_definition_at_stage(1), 'An old tool for performing calculations.')
+
+    def test_word_26(self):
+        """
+        Test that a Word that was defined at an older stage but not its most
+        recent stage will use the previous definition for its most recent
+        stage.
+        """
+        self.abacus.add_definition('A tool for performing calculations.', 0)
+        self.abacus.add_language_sound_change(self.unschwa_u)
+        self.assertEqual(self.abacus.get_definition_at_stage(1), 'A tool for performing calculations.')
+
+    def test_word_27(self):
+        """
+        Test that a Word that was defined at an older stage but not its most
+        recent stage will return a blank definition when the definition is
+        accessed by exact stage.
+        """
+        self.abacus.add_definition('A tool for performing calculations.', 0)
+        self.abacus.add_language_sound_change(self.unschwa_u)
+        self.assertEqual(self.abacus.get_definition_at_stage(1, exact=True), '')
+
+    def test_word_28(self):
+        """
+        Test that a Word that was defined at an older stage but not its most
+        recent stage will not be considered defined when the definition is
+        accessed by exact stage.
+        """
+        self.abacus.add_definition('A tool for performing calculations.', 0)
+        self.abacus.add_language_sound_change(self.unschwa_u)
+        self.assertFalse(self.abacus.has_definition_at_stage(1, exact=True))
+
+    def test_word_29(self):
+        """
+        Test that a Word that was defined at an older stage but not its most
+        recent stage can determine the stage it was most recently defined at
+        relative to its most recent stage.
+        """
+        self.abacus.add_definition('A tool for performing calculations.', 0)
+        self.abacus.add_language_sound_change(self.unschwa_u)
+        self.assertEqual(self.abacus.get_definition_stage_at_stage(self.abacus.get_current_stage()), 0)
+
 
 # noinspection SpellCheckingInspection
 class TestLanguage(unittest.TestCase):
