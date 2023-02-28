@@ -64,12 +64,39 @@ class Word:
         self.base_stem = None
 
     def add_form_word(self, form_word, stage=-1):
+        """Add a Word to this Word as a conjugated form.
+
+        The form will automatically inherit all language sound changes and
+        word sound changes from this Word as well as automatically generate
+        definitions based on those in this Word.
+
+        Note that there is no need to add a base stem to the form, as words
+        that are forms of other words will use their "parent" word's stem from
+        the stage at which the form was added as their base stem. From there,
+        language sound changes will apply to parent words and their forms
+        separately, causing natural irregularities in conjugations.
+        """
+
         form_word.stem_word = self
         form_word.stem_word_language_stage = max(stage, self.original_language_stage)
+        form_word.language_sound_changes = copy.copy(self.language_sound_changes)
+        form_word.word_sound_changes = copy.copy(self.word_sound_changes)
+        if form_word.word_form_name is None:
+            form_word.word_form_name = 'Unnamed'
+        for d_stage, definition in self.definitions.items():
+            form_word.add_definition(form_word.word_form_name + ' form of a word meaning: ' + definition, d_stage)
         self.word_forms.append(form_word)
         return form_word
 
     def add_form_from_rule(self, word_form):
+        """Create a Word from a word form rule as a form for this Word.
+
+        The form will determine its name, original stage, obsoleted stage, and
+        conjugation rules (in the form of word sound changes) from the word
+        form rule. It will inherit everything else it needs from this Word as
+        described in add_form_word.
+        """
+
         form_word = Word(None, self.categories, max(word_form.original_language_stage, self.original_language_stage))
         form_word.word_form_name = word_form.name
         if self.obsoleted_language_stage > -1 < word_form.obsoleted_language_stage:
@@ -78,10 +105,6 @@ class Word:
         else:  # little trick to use whichever is not -1, or -1 if they both are, since it will never be < -1
             form_word.obsoleted_language_stage = max(self.obsoleted_language_stage,
                                                      word_form.obsoleted_language_stage)
-        for stage, definition in self.definitions.items():
-            form_word.add_definition(word_form.name + ' form of a word meaning: ' + definition, stage)
-        form_word.language_sound_changes = copy.copy(self.language_sound_changes)
-        form_word.word_sound_changes = copy.copy(self.word_sound_changes)
         for conjugation_rule in word_form.get_adjusted_rules():  # forms have a None base stem and are calculated on the
             form_word.add_word_sound_change(conjugation_rule)  # fly; the rules are located in the word sound changes
             conjugation_rule.stage = form_word.original_language_stage
