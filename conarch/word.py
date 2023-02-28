@@ -91,7 +91,7 @@ class Word:
         return True if self.source_word else False  # not a boolean so this is fine
 
     def is_word_form(self):
-        return True if self.word_form_name else False  # not a boolean so this is fine
+        return True if self.stem_word else False  # not a boolean so this is fine
 
     def __str__(self):
         return self.get_modern_stem_string(include_ipa=False)
