@@ -847,6 +847,72 @@ class TestWord(unittest.TestCase):
         self.abacus.add_language_sound_change(self.unschwa_u)
         self.assertEqual(self.abacus.get_definition_stage_at_stage(self.abacus.get_current_stage()), 0)
 
+    def test_word_30(self):
+        """
+        Test that setting a Word as a form of another Word causes both words'
+        base stems to be equal when there are no sound changes in either word.
+        """
+        dummy_form = Word([[]])
+        self.abacus.add_form_word(dummy_form)
+        self.assertEqual(self.abacus.get_base_stem(), dummy_form.get_base_stem())
+
+    def test_word_31(self):
+        """
+        Test that setting a Word as a form of another Word that was added past
+        the first language stage causes the form's base stem to be equal to
+        the parent's stem at the stage the form was added.
+        """
+        self.abacus.add_language_sound_change(self.unschwa_u)
+        dummy_form = Word([[]])
+        self.abacus.add_form_word(dummy_form)
+        self.assertEqual(self.abacus.get_stem_at_stage(1), dummy_form.get_base_stem())
+
+    def test_word_32(self):
+        """
+        Test that the forms of a Word will inherit language sound changes that
+        are added to the Word.
+        """
+        dummy_form = Word([[]])
+        self.abacus.add_form_word(dummy_form)
+        self.abacus.add_language_sound_change(self.unschwa_u)
+        self.assertIn(self.unschwa_u, dummy_form.language_sound_changes)
+
+    def test_word_33(self):
+        """
+        Test that forms of a Word added after a language sound change will
+        inherit the language sound change.
+        """
+        self.abacus.add_language_sound_change(self.unschwa_u)
+        dummy_form = Word([[]])
+        self.abacus.add_form_word(dummy_form)
+        self.assertIn(self.unschwa_u, dummy_form.language_sound_changes)
+
+    def test_word_34(self):
+        """
+        Test that forms of a Word added after a definition will have a
+        definition at the same stage that contains the parent definition.
+        """
+        self.abacus.add_definition('A tool for performing calculations.', 0)
+        dummy_form = Word([[]])
+        self.abacus.add_form_word(dummy_form)
+        self.assertTrue(dummy_form.has_definition_at_stage(0))
+        self.assertIn('A tool for performing calculations.', dummy_form.get_definition_stage_at_stage(0))
+
+    def test_word_35(self):
+        """
+        Test that forms of a Word added after two definitions will have
+        definitions at the same stages that contain the parent definitions.
+        """
+        self.abacus.add_definition('A tool for performing calculations.', 0)
+        self.abacus.add_language_sound_change(self.unschwa_u)
+        self.abacus.add_definition('An old tool for performing calculations.', 1)
+        dummy_form = Word([[]])
+        self.abacus.add_form_word(dummy_form)
+        self.assertTrue(dummy_form.has_definition_at_stage(0))
+        self.assertIn('A tool for performing calculations.', dummy_form.get_definition_stage_at_stage(0))
+        self.assertTrue(dummy_form.has_definition_at_stage(1))
+        self.assertIn('An old tool for performing calculations.', dummy_form.get_definition_stage_at_stage(1))
+
 
 # noinspection SpellCheckingInspection
 class TestLanguage(unittest.TestCase):
