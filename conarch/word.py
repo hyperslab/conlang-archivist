@@ -88,7 +88,7 @@ class Word:
         self.word_forms.append(form_word)
         return form_word
 
-    def add_form_from_rule(self, word_form):
+    def add_form_from_rule(self, word_form, assign_id=True):
         """Create a Word from a word form rule as a form for this Word.
 
         The form will determine its name, original stage, obsoleted stage, and
@@ -97,7 +97,8 @@ class Word:
         described in add_form_word.
         """
 
-        form_word = Word(None, self.categories, max(word_form.original_language_stage, self.original_language_stage))
+        form_word = Word(None, self.categories, max(word_form.original_language_stage, self.original_language_stage),
+                         assign_id=assign_id)
         form_word.word_form_name = word_form.name
         if self.obsoleted_language_stage > -1 < word_form.obsoleted_language_stage:
             form_word.obsoleted_language_stage = min(self.obsoleted_language_stage,

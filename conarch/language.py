@@ -173,19 +173,19 @@ class Language:
                 if sound not in self.modern_phonetic_inventory:
                     self.modern_phonetic_inventory.append(sound)
 
-    def add_word_form(self, word_form, use_current_stage=True):
+    def add_word_form(self, word_form, use_current_stage=True, assign_ids=True):
         if use_current_stage:
             word_form.original_language_stage = self.get_current_stage()
         self.word_forms.append(word_form)
         form_words = []
         for word in self.copy_words_at_stage(word_form.original_language_stage, include_all_definitions=True):
             if any(category in word.categories for category in word_form.categories):
-                form_words.append(self.apply_form_to_word(word_form, word.copied_from))
+                form_words.append(self.apply_form_to_word(word_form, word.copied_from, assign_id=assign_ids))
         return form_words
 
     @staticmethod
-    def apply_form_to_word(word_form, word):
-        return word.add_form_from_rule(word_form)
+    def apply_form_to_word(word_form, word, assign_id=True):
+        return word.add_form_from_rule(word_form, assign_id=assign_id)
 
     def print_all_word_forms(self, include_ipa=False, include_base_stem=False):
         for word in self.words:
@@ -203,7 +203,7 @@ class Language:
         return len(self.sound_changes)
 
     def copy_words_at_stage(self, language_stage=-1, include_previous_stages=True, include_language_sound_changes=True,
-                            branch=False, include_all_definitions=False, preserve_ids=False):
+                            branch=False, include_all_definitions=False, preserve_ids=False, include_forms=True):
         """Return a list containing copies of all words that existed at a certain language stage.
 
         The words will exist as they did at the specified stage, including all language sound changes and word sound
@@ -221,6 +221,11 @@ class Language:
                     new_word = copy.copy(word)
                     if not preserve_ids:
                         new_word.word_id = None
+                    if not include_forms:
+                        new_word.word_forms = []
+                    if not preserve_ids and include_forms:
+                        for form in new_word.word_forms:
+                            form.word_id = None
                     if branch:
                         new_word.set_as_branch(word, language_stage)
                     new_word.copied_from = word
@@ -230,6 +235,11 @@ class Language:
                     new_word = copy.copy(word)
                     if not preserve_ids:
                         new_word.word_id = None
+                    if not include_forms:
+                        new_word.word_forms = []
+                    if not preserve_ids and include_forms:
+                        for form in new_word.word_forms:
+                            form.word_id = None
                     if branch:
                         new_word.set_as_branch(word, language_stage)
                     new_word.copied_from = word
@@ -340,9 +350,9 @@ class Language:
         while stage <= language_stage:
             language.add_words(self.copy_words_at_stage(language_stage=stage, include_previous_stages=False,
                                                         include_language_sound_changes=False,
-                                                        include_all_definitions=True))
+                                                        include_all_definitions=True, include_forms=False))
             for form in self.get_forms_added_at_stage(stage):
-                language.add_word_form(form, form.original_language_stage)
+                language.add_word_form(form, form.original_language_stage, assign_ids=False)
             if stage < language_stage:
                 sound_change = copy.copy(self.sound_changes[stage])
                 sound_change.sound_change_rule_id = None
@@ -356,9 +366,10 @@ class Language:
         language = Language('Branch of ' + self.name, self.get_phonetic_inventory_at_stage(language_stage),
                             self.phonotactics)
         language.add_words(self.copy_words_at_stage(language_stage=language_stage, include_previous_stages=True,
-                                                    include_language_sound_changes=False, branch=True))
+                                                    include_language_sound_changes=False, branch=True,
+                                                    include_forms=False))
         for form in self.get_forms_at_stage(language_stage):
-            language.add_word_form(form, form.original_language_stage)
+            language.add_word_form(form, form.original_language_stage, assign_ids=False)
         language.source_language = self
         language.source_language_stage = language_stage
         self.child_languages.append(language)
