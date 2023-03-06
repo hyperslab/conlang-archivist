@@ -204,10 +204,12 @@ class Language:
 
     def copy_words_at_stage(self, language_stage=-1, include_previous_stages=True, include_language_sound_changes=True,
                             branch=False, include_all_definitions=False, preserve_ids=False, include_forms=True):
-        """Return a list containing copies of all words that existed at a certain language stage.
+        """Return a list containing copies of all words that existed at a
+        certain language stage.
 
-        The words will exist as they did at the specified stage, including all language sound changes and word sound
-        changes up to and including the specified stage, and none from future stages.
+        The words will exist as they did at the specified stage, including all
+        language sound changes and word sound changes up to and including the
+        specified stage, and none from future stages.
         """
 
         if language_stage < 0:
@@ -218,7 +220,7 @@ class Language:
         for word in self.words:
             if include_previous_stages:
                 if word.original_language_stage <= language_stage:
-                    new_word = copy.copy(word)
+                    new_word = copy.deepcopy(word)
                     if not preserve_ids:
                         new_word.word_id = None
                     if not include_forms:
@@ -232,7 +234,7 @@ class Language:
                     stage_words.append(new_word)
             else:
                 if word.original_language_stage == language_stage:
-                    new_word = copy.copy(word)
+                    new_word = copy.deepcopy(word)
                     if not preserve_ids:
                         new_word.word_id = None
                     if not include_forms:
@@ -247,9 +249,11 @@ class Language:
 
         # trim sound changes from included words to match language stage
         for word in stage_words:
-            word.sound_changes = word.sound_changes_at_stage(language_stage)
-            if not include_language_sound_changes:
-                word.sound_changes = word.word_sound_changes
+            word.word_sound_changes = [s for s in word.word_sound_changes if s.stage <= language_stage]
+            if include_language_sound_changes:
+                word.language_sound_changes = [s for s in word.language_sound_changes if s.stage <= language_stage]
+            else:
+                word.language_sound_changes = []
 
         # trim definitions from included words to match language stage
         if not include_all_definitions:
@@ -267,51 +271,6 @@ class Language:
                             word.add_definition(definition, stage)
 
         return stage_words
-
-    def copy_word_at_stage(self, word_id, language_stage=-1, include_previous_stages=True,
-                           include_language_sound_changes=True):
-        """Return a copy of a word as it existed at a certain language stage.
-
-        The word will include all language sound changes and word sound changes up to and including the specified stage,
-        and none from future stages.
-        """
-
-        if language_stage < 0:
-            language_stage = self.get_current_stage()
-        stage_word = None
-
-        # look for the word
-        for word in [w for w in self.words if w.word_id == word_id]:  # should only be 1
-            if include_previous_stages:
-                if word.original_language_stage <= language_stage:
-                    word = copy.copy(word)
-                    word.word_id = None
-                    stage_word = word
-            else:
-                if word.original_language_stage == language_stage:
-                    word = copy.copy(word)
-                    word.word_id = None
-                    stage_word = word
-
-        # return None if the word was not found at the specified stage
-        if stage_word is None:
-            return None
-
-        # trim sound changes from the word to match language stage
-        stage_word.sound_changes = stage_word.sound_changes_at_stage(language_stage)
-        if not include_language_sound_changes:
-            stage_word.sound_changes = stage_word.word_sound_changes()
-
-        # trim definitions from the word to match language stage
-        definitions = list()
-        for definition, stage in stage_word.get_definitions_and_stages():
-            if stage <= language_stage:
-                definitions.append((definition, stage))
-        stage_word.clear_definitions()
-        for definition, stage in definitions:
-            stage_word.add_definition(definition, stage)
-
-        return stage_word
 
     def get_sound_changes_at_stage(self, language_stage=-1):
         if language_stage < 0:
@@ -345,19 +304,16 @@ class Language:
     def copy_language_at_stage(self, language_stage=-1):
         if language_stage < 0:
             language_stage = self.get_current_stage()
-        language = Language(self.name, self.original_phonetic_inventory, self.phonotactics)
-        stage = 0
-        while stage <= language_stage:
-            language.add_words(self.copy_words_at_stage(language_stage=stage, include_previous_stages=False,
-                                                        include_language_sound_changes=False,
-                                                        include_all_definitions=True, include_forms=False))
-            for form in self.get_forms_added_at_stage(stage):
-                language.add_word_form(form, form.original_language_stage, assign_ids=False)
-            if stage < language_stage:
-                sound_change = copy.copy(self.sound_changes[stage])
-                sound_change.sound_change_rule_id = None
-                language.apply_sound_change(sound_change)
-            stage = stage + 1
+        language = Language(self.name, copy.deepcopy(self.original_phonetic_inventory), self.phonotactics)
+        language.add_words(self.copy_words_at_stage(language_stage=language_stage, include_previous_stages=True,
+                                                    include_language_sound_changes=False,
+                                                    include_all_definitions=True, include_forms=False))
+        for form in self.get_forms_at_stage(language_stage):
+            language.add_word_form(form, form.original_language_stage, assign_ids=False)
+        for stage_change in self.sound_changes:
+            sound_change = copy.copy(stage_change)
+            sound_change.sound_change_rule_id = None
+            language.apply_sound_change(sound_change)
         return language
 
     def branch_language_at_stage(self, language_stage=-1):
