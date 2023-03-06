@@ -304,7 +304,7 @@ class Language:
     def copy_language_at_stage(self, language_stage=-1):
         if language_stage < 0:
             language_stage = self.get_current_stage()
-        language = Language(self.name, copy.deepcopy(self.original_phonetic_inventory), self.phonotactics)
+        language = Language(self.name, self.original_phonetic_inventory, self.phonotactics)
         language.add_words(self.copy_words_at_stage(language_stage=language_stage, include_previous_stages=True,
                                                     include_language_sound_changes=False,
                                                     include_all_definitions=True, include_forms=False))
@@ -314,6 +314,8 @@ class Language:
             sound_change = copy.copy(stage_change)
             sound_change.sound_change_rule_id = None
             language.apply_sound_change(sound_change)
+        sound_map = dict(zip(language.get_full_sound_inventory(), copy.deepcopy(language.get_full_sound_inventory())))
+        language.map_sounds(sound_map)
         return language
 
     def branch_language_at_stage(self, language_stage=-1):
@@ -347,3 +349,25 @@ class Language:
     def add_original_sound(self, sound):
         self.original_phonetic_inventory.append(sound)
         self.modern_phonetic_inventory.append(sound)
+
+    def map_sounds(self, sound_map):
+        new_original_phonetic_inventory = []
+        for sound in self.original_phonetic_inventory:
+            if sound in sound_map:
+                new_original_phonetic_inventory.append(sound_map[sound])
+            else:
+                new_original_phonetic_inventory.append(sound)
+        self.original_phonetic_inventory = new_original_phonetic_inventory
+        new_modern_phonetic_inventory = []
+        for sound in self.modern_phonetic_inventory:
+            if sound in sound_map:
+                new_modern_phonetic_inventory.append(sound_map[sound])
+            else:
+                new_modern_phonetic_inventory.append(sound)
+        self.modern_phonetic_inventory = new_modern_phonetic_inventory
+        for word in self.words:
+            word.map_sounds(sound_map)
+        for sound_change in self.sound_changes:
+            sound_change.map_sounds(sound_map)
+        for form_rule in self.word_forms:
+            form_rule.map_sounds(sound_map)

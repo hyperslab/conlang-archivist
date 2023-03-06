@@ -66,3 +66,9 @@ class WordFormRule:
             sequence = sound_helpers.change_sounds(sequence, sound_change.old_sounds, sound_change.new_sounds,
                                                    sound_change.condition, sound_change.condition_sounds)
         return sequence
+
+    def map_sounds(self, sound_map):
+        for rule in self.base_form_rules:
+            rule.map_sounds(sound_map)
+        for sound_change in self.sound_changes:
+            sound_change.map_sounds(sound_map)

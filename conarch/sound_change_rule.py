@@ -119,3 +119,29 @@ class SoundChangeRule:
     def get_as_conjugation_rule_string(self):
         return 'Add ' + self.get_affix_type_string() + ' "' + self.new_sounds_str() + \
                '" (/' + self.new_sounds_ipa_str() + '/) ' + self.get_condition_string()
+
+    def map_sounds(self, sound_map):
+        if self.old_sounds:
+            new_old_sounds = []
+            for sound in self.old_sounds:
+                if sound in sound_map:
+                    new_old_sounds.append(sound_map[sound])
+                else:
+                    new_old_sounds.append(sound)
+            self.old_sounds = new_old_sounds
+        if self.new_sounds:
+            new_new_sounds = []
+            for sound in self.new_sounds:
+                if sound in sound_map:
+                    new_new_sounds.append(sound_map[sound])
+                else:
+                    new_new_sounds.append(sound)
+            self.new_sounds = new_new_sounds
+        if self.condition_sounds:
+            new_condition_sounds = []
+            for sound in self.condition_sounds:
+                if sound in sound_map:
+                    new_condition_sounds.append(sound_map[sound])
+                else:
+                    new_condition_sounds.append(sound)
+            self.condition_sounds = new_condition_sounds
