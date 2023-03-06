@@ -1150,6 +1150,50 @@ class TestLanguage(unittest.TestCase):
                     for source_sound, cloned_sound in zip(source_change.condition_sounds, cloned_change.condition_sounds):
                         self.assertEqual(str(source_sound), str(cloned_sound))
 
+    def test_language_16(self):
+        """
+        Test that a copied Language maintains its name and phonotactics.
+        """
+        cloned = self.testspeak.copy_language_at_stage()  # not specifying stage uses most recent
+        self.assertEqual(self.testspeak.name, cloned.name)
+        self.assertEqual(self.testspeak.phonotactics, cloned.phonotactics)
+
+    def test_language_17(self):
+        """
+        Test that a copied language's original phonetic inventory consists of
+        sounds that are copies of sounds from the source language's original
+        phonetic inventory.
+        """
+        cloned = self.testspeak.copy_language_at_stage()  # not specifying stage uses most recent
+        self.assertEqual(len(self.testspeak.original_phonetic_inventory), len(cloned.original_phonetic_inventory))
+        for original_sound, cloned_sound in zip(self.testspeak.original_phonetic_inventory,
+                                                cloned.original_phonetic_inventory):
+            self.assertIsNot(original_sound, cloned_sound)
+            self.assertEqual(str(original_sound), str(cloned_sound))
+
+    def test_language_18(self):
+        """
+        Test that copied words in a copied Language are made of sounds from
+        the copied language's phonetic inventory.
+        """
+        cloned = self.testspeak.copy_language_at_stage()  # not specifying stage uses most recent
+        inventory_sounds = [s for s in cloned.get_full_sound_inventory()]
+        for word in cloned.words:
+            for sound in word.get_modern_sounds():
+                self.assertIn(sound, inventory_sounds)  # this might not be an accurate measurement b/c __eq__
+
+    def test_language_19(self):
+        """
+        Test that copied words in a copied Language are made of sounds that
+        are not in the original language's phonetic inventory.
+        """
+        cloned = self.testspeak.copy_language_at_stage()  # not specifying stage uses most recent
+        inventory_sounds = [s for s in self.testspeak.get_full_sound_inventory()]
+        for word in cloned.words:
+            for sound in word.get_modern_sounds():
+                for inventory_sound in inventory_sounds:
+                    self.assertIsNot(sound, inventory_sound)  # assertNotIn does not apply here due to using __eq__
+
 
 if __name__ == '__main__':
     unittest.main()
