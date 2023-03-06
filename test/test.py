@@ -927,8 +927,10 @@ class TestLanguage(unittest.TestCase):
         sounds = [self.t, self.e, self.s, self.p, self.ea_i, self.k]
         self.testspeak = Language('Testspeak', sounds, 'C(C)VC(C)')
         self.test = Word([[self.t, self.e, self.s, self.t]], 'N', assign_id=False)
+        self.test.add_definition('Something that is done to confirm a desired behavior.', 0)
         self.test.word_id = 1
         self.speak = Word([[self.s, self.p, self.ea_i, self.k]], 'N', assign_id=False)
+        self.test.add_definition('A suffix for the name of a language.', 0)
         self.speak.word_id = 2
         words = [self.test, self.speak]
         self.testspeak.add_words(words)
@@ -1061,6 +1063,92 @@ class TestLanguage(unittest.TestCase):
         self.assertIn(self.final_st_to_s, self.word.all_sound_changes())
         self.assertNotIn(self.unvoice_d, self.speech.all_sound_changes())
         self.assertIn(self.final_st_to_s, self.speech.all_sound_changes())
+
+    def test_language_11(self):
+        """
+        Test that copying a Language at its most recent stage causes copies of
+        every Word from the source Language (with the same base and modern
+        stems, but not the same object) to be present in the copied Language.
+        """
+        cloned = self.testspeak.copy_language_at_stage()  # not specifying stage uses most recent
+        self.assertEqual(len(self.testspeak.words), len(cloned.words))
+        for source_word, cloned_word in zip(self.testspeak.words, cloned.words):
+            self.assertEqual(source_word.get_base_stem_string(include_ipa=True),
+                             cloned_word.get_base_stem_string(include_ipa=True))
+            self.assertEqual(source_word.get_modern_stem_string(include_ipa=True),
+                             cloned_word.get_modern_stem_string(include_ipa=True))
+            self.assertNotEqual(source_word, cloned_word)
+
+    def test_language_12(self):
+        """
+        Test that copied words in a copied Language maintain their original
+        langauge stage, obsoleted language stage, and categories.
+        """
+        cloned = self.testspeak.copy_language_at_stage()  # not specifying stage uses most recent
+        self.assertEqual(len(self.testspeak.words), len(cloned.words))
+        for source_word, cloned_word in zip(self.testspeak.words, cloned.words):
+            self.assertEqual(source_word.original_language_stage,
+                             cloned_word.original_language_stage)
+            self.assertEqual(source_word.obsoleted_language_stage,
+                             cloned_word.obsoleted_language_stage)
+            self.assertEqual(source_word.categories,
+                             cloned_word.categories)
+
+    def test_language_13(self):
+        """
+        Test that copied words in a copied Language maintain their definitions.
+        """
+        cloned = self.testspeak.copy_language_at_stage()  # not specifying stage uses most recent
+        self.assertEqual(len(self.testspeak.words), len(cloned.words))
+        for source_word, cloned_word in zip(self.testspeak.words, cloned.words):
+            for (source_key, source_value), (cloned_key, cloned_value) in zip(source_word.get_definitions_and_stages(),
+                                                                              cloned_word.get_definitions_and_stages()):
+                self.assertEqual(source_key, cloned_key)
+                self.assertEqual(source_value, cloned_value)
+
+    def test_language_14(self):
+        """
+        Test that copied words in a copied Language maintain their language
+        sound changes.
+        """
+        self.testspeak.apply_sound_change(self.unvoice_d)
+        self.test.add_word_sound_change(self.final_st_to_s)
+        cloned = self.testspeak.copy_language_at_stage()  # not specifying stage uses most recent
+        self.assertEqual(len(self.testspeak.words), len(cloned.words))
+        for source_word, cloned_word in zip(self.testspeak.words, cloned.words):
+            self.assertEqual(len(source_word.language_sound_changes), len(cloned_word.language_sound_changes))
+            for source_change, cloned_change in zip(source_word.language_sound_changes,
+                                                    cloned_word.language_sound_changes):
+                self.assertEqual(str(source_change), str(cloned_change))
+                self.assertEqual(source_change.stage, cloned_change.stage)
+                if source_change.condition_sounds is not None or cloned_change.condition_sounds is not None:
+                    self.assertIsNotNone(source_change.condition_sounds)
+                    self.assertIsNotNone(cloned_change.condition_sounds)
+                    self.assertEqual(len(source_change.condition_sounds), len(cloned_change.condition_sounds))
+                    for source_sound, cloned_sound in zip(source_change.condition_sounds, cloned_change.condition_sounds):
+                        self.assertEqual(str(source_sound), str(cloned_sound))
+
+    def test_language_15(self):
+        """
+        Test that copied words in a copied Language maintain their word sound
+        changes.
+        """
+        self.testspeak.apply_sound_change(self.unvoice_d)
+        self.test.add_word_sound_change(self.final_st_to_s)
+        cloned = self.testspeak.copy_language_at_stage()  # not specifying stage uses most recent
+        self.assertEqual(len(self.testspeak.words), len(cloned.words))
+        for source_word, cloned_word in zip(self.testspeak.words, cloned.words):
+            self.assertEqual(len(source_word.word_sound_changes), len(cloned_word.word_sound_changes))
+            for source_change, cloned_change in zip(source_word.word_sound_changes,
+                                                    cloned_word.word_sound_changes):
+                self.assertEqual(str(source_change), str(cloned_change))
+                self.assertEqual(source_change.stage, cloned_change.stage)
+                if source_change.condition_sounds is not None or cloned_change.condition_sounds is not None:
+                    self.assertIsNotNone(source_change.condition_sounds)
+                    self.assertIsNotNone(cloned_change.condition_sounds)
+                    self.assertEqual(len(source_change.condition_sounds), len(cloned_change.condition_sounds))
+                    for source_sound, cloned_sound in zip(source_change.condition_sounds, cloned_change.condition_sounds):
+                        self.assertEqual(str(source_sound), str(cloned_sound))
 
 
 if __name__ == '__main__':
