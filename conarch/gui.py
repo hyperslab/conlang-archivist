@@ -356,21 +356,19 @@ class Application:
     def open_current_language_word(self, event):
         self.open_word(self.language_words[event.widget.curselection()[0]])
 
-    def open_sound_change(self, sound_change, history_stage, allow_edit=True):
+    def open_sound_change(self, sound_change, allow_edit=True):
         sound_change_window = tk.Toplevel(self.frame)
-        SoundChangeWindow(sound_change_window, self.current_language, sound_change, history_stage,
+        SoundChangeWindow(sound_change_window, self.current_language, sound_change,
                           edit_sound_change_command=self.update_edit_sound_change if allow_edit else None,
                           new_sound_command=self.create_sound)
 
     def open_current_language_sound_change(self, event):
-        self.open_sound_change(self.language_history[event.widget.curselection()[0]],
-                               event.widget.curselection()[0])
+        self.open_sound_change(self.language_history[event.widget.curselection()[0]])
 
     def open_history_item(self, event):
         item = self.language_history[event.widget.curselection()[0]]
-        order = event.widget.curselection()[0]
         if 'SoundChangeRule' in str(type(item)):  # 'type(x) is y' does not work anymore for some reason
-            self.open_sound_change(item, order)
+            self.open_sound_change(item)
         elif 'WordFormRule' in str(type(item)):
             word_form_window = tk.Toplevel(self.frame)
             WordFormWindow(word_form_window, language=self.current_language, word_form=item,

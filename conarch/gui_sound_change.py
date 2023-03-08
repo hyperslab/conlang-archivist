@@ -5,20 +5,19 @@ from conarch.sound_change_rule import SoundChangeRule
 
 
 class SoundChangeWindow:
-    def __init__(self, master, language, sound_change, history_stage, edit_sound_change_command=None,
+    def __init__(self, master, language, sound_change, edit_sound_change_command=None,
                  new_sound_command=None):
         self.master = master
         self.frame = tk.Frame(self.master)
 
         self.language = language
         self.sound_change = sound_change
-        self.history_stage = history_stage
         self.edit_sound_change_command = edit_sound_change_command
         self.new_sound_command = new_sound_command
 
         self.sound_change_label = tk.Label(self.frame)
         self.sound_change_ipa_label = tk.Label(self.frame)
-        self.history_stage_label = tk.Label(self.frame, text='Language History Stage:\n' + str(history_stage + 1))
+        self.history_stage_label = tk.Label(self.frame, text='Language History Stage:\n' + str(sound_change.stage + 1))
         self.condition_label = tk.Label(self.frame)
         self.set_labels(sound_change)
         self.sound_change_edit_button = tk.Button(self.frame, text='Edit Sound Change',

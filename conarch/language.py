@@ -162,6 +162,7 @@ class Language:
         return syllable
 
     def apply_sound_change(self, sound_change):
+        sound_change.stage = self.get_current_stage()  # first should be 1
         self.sound_changes.append(sound_change)
         for word in self.words:
             word.add_language_sound_change(sound_change)
