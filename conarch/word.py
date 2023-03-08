@@ -443,16 +443,17 @@ class Word:
                 yield sound
 
     def map_sounds(self, sound_map):
-        new_base_stem = []
-        for syllable in self.base_stem:
-            new_syllable = []
-            for sound in syllable:
-                if sound in sound_map:
-                    new_syllable.append(sound_map[sound])
-                else:
-                    new_syllable.append(sound)
-            new_base_stem.append(new_syllable)
-        self.base_stem = new_base_stem
+        if self.base_stem:
+            new_base_stem = []
+            for syllable in self.base_stem:
+                new_syllable = []
+                for sound in syllable:
+                    if sound in sound_map:
+                        new_syllable.append(sound_map[sound])
+                    else:
+                        new_syllable.append(sound)
+                new_base_stem.append(new_syllable)
+            self.base_stem = new_base_stem
         for sound_change in self.language_sound_changes:
             sound_change.map_sounds(sound_map)
         for sound_change in self.word_sound_changes:
