@@ -309,8 +309,8 @@ class Language:
                                                     include_language_sound_changes=False,
                                                     include_all_definitions=True, include_forms=False))
         for form in self.get_forms_at_stage(language_stage):
-            language.add_word_form(form, form.original_language_stage, assign_ids=False)
-        for stage_change in self.sound_changes:
+            language.add_word_form(form, use_current_stage=False, assign_ids=False)
+        for stage_change in self.sound_changes[:language_stage]:
             sound_change = copy.copy(stage_change)
             sound_change.sound_change_rule_id = None
             language.apply_sound_change(sound_change)
