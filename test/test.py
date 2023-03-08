@@ -6,6 +6,7 @@ from conarch.sound import Sound
 from conarch.sound_change_rule import SoundChangeRule
 from conarch.sound_helpers import change_sounds
 from conarch.word import Word
+from conarch.word_form_rule import WordFormRule
 
 
 # noinspection SpellCheckingInspection
@@ -537,6 +538,8 @@ class TestWord(unittest.TestCase):
         self.voice_t = SoundChangeRule(self.t, self.d)
         self.stop = Sound("'", 'ʔ', 'C')
         self.final_d_to_stop = SoundChangeRule(self.d, self.stop, condition='_#')
+        self.plural = WordFormRule('Plural', 'N')
+        self.plural.add_suffix_rule(self.s)
 
     def test_word_1(self):
         """
@@ -912,6 +915,44 @@ class TestWord(unittest.TestCase):
         self.assertIn('A tool for performing calculations.', dummy_form.get_definition_stage_at_stage(0))
         self.assertTrue(dummy_form.has_definition_at_stage(1))
         self.assertIn('An old tool for performing calculations.', dummy_form.get_definition_stage_at_stage(1))
+
+    def test_word_36(self):
+        """
+        Test that adding a form from a Word Form Rule causes the base Word to
+        have one more form.
+        """
+        forms_before = len(self.abacus.word_forms)
+        self.abacus.add_form_from_rule(self.plural, assign_id=False)
+        self.assertEqual(len(self.abacus.word_forms), forms_before + 1)
+
+    def test_word_37(self):
+        """
+        Test that adding a form from a Word Form Rule causes the new form to
+        have its word form name set based on the Word Form Rule.
+        """
+        form = self.abacus.add_form_from_rule(self.plural, assign_id=False)
+        self.assertEqual(form.word_form_name, self.plural.name)
+
+    def test_word_38(self):
+        """
+        Test that adding a form from a Word Form Rule causes the new form's
+        base stem to be equivalent to the base word's modern stem from the
+        stage the form was added.
+        """
+        modern_stem = self.abacus.get_modern_stem()
+        form = self.abacus.add_form_from_rule(self.plural, assign_id=False)
+        self.assertEqual(form.get_base_stem(), modern_stem)
+
+    def test_word_39(self):
+        """
+        Test that adding a form from a Word Form Rule causes the new form's
+        modern stem to be equivalent to the base word's modern stem from the
+        stage the form was added plus the adjusted rules from the Word From
+        Rule.
+        """
+        modern_stem = self.abacus.get_modern_stem()
+        form = self.abacus.add_form_from_rule(self.plural, assign_id=False)
+        self.assertEqual(form.get_modern_stem(), modern_stem[:-1] + [modern_stem[-1] + [self.s]])
 
 
 # noinspection SpellCheckingInspection
