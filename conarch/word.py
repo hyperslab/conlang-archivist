@@ -80,7 +80,7 @@ class Word:
         form_word.stem_word = self
         form_word.stem_word_language_stage = max(stage, self.original_language_stage)
         form_word.language_sound_changes = copy.copy(self.language_sound_changes)
-        form_word.word_sound_changes = copy.copy(self.word_sound_changes)
+        form_word.word_sound_changes = copy.copy(self.word_sound_changes) + form_word.word_sound_changes
         if form_word.word_form_name is None:
             form_word.word_form_name = 'Unnamed'
         for d_stage, definition in self.definitions.items():
