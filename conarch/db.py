@@ -480,7 +480,7 @@ def fetch_word(word_id, fetch_forms=True):
     language_sound_changes = []
     for sound_change_rule_id, in res:
         language_sound_changes.append(fetch_sound_change_rule(sound_change_rule_id))
-    word = Word(stem, categories, original_language_stage, assign_id=False)
+    word = Word(stem, categories, original_language_stage)
     word.word_id = word_id
     if caching_on:
         word_cache[word_id] = word

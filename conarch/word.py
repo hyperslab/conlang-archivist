@@ -1,7 +1,6 @@
 import copy
 from conarch import sound_helpers
 import itertools
-from conarch import id_assigner
 
 
 class Word:
@@ -31,10 +30,8 @@ class Word:
     (at the time) in which it was.
     """
 
-    def __init__(self, base_stem, categories='', original_language_stage=0, assign_id=True):
+    def __init__(self, base_stem, categories='', original_language_stage=0):
         self.word_id = None
-        if assign_id:
-            self.word_id = id_assigner.new_word_id()
         self.base_stem = base_stem  # don't access this directly unless you're sure the word is not branched etc.
         self.categories = categories
         self.language_sound_changes = list()  # inherited from the language; should be same as language.sound_changes
@@ -88,7 +85,7 @@ class Word:
         self.word_forms.append(form_word)
         return form_word
 
-    def add_form_from_rule(self, word_form, assign_id=True):
+    def add_form_from_rule(self, word_form):
         """Create a Word from a word form rule as a form for this Word.
 
         The form will determine its name, original stage, obsoleted stage, and
@@ -97,8 +94,7 @@ class Word:
         described in add_form_word.
         """
 
-        form_word = Word(None, self.categories, max(word_form.original_language_stage, self.original_language_stage),
-                         assign_id=assign_id)
+        form_word = Word(None, self.categories, max(word_form.original_language_stage, self.original_language_stage))
         form_word.word_form_name = word_form.name
         if self.obsoleted_language_stage > -1 < word_form.obsoleted_language_stage:
             form_word.obsoleted_language_stage = min(self.obsoleted_language_stage,

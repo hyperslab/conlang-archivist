@@ -524,8 +524,7 @@ class TestWord(unittest.TestCase):
         self.c_k = Sound('c', 'k', 'C')
         self.u_schwa = Sound('u', 'ə', 'Və')
         self.s = Sound('s', 's', 'C')
-        self.abacus = Word([[self.a_ae], [self.b, self.a_schwa], [self.c_k, self.u_schwa, self.s]], 'N',
-                           assign_id=False)  # don't use id assignment for tests not specifically about id assignment
+        self.abacus = Word([[self.a_ae], [self.b, self.a_schwa], [self.c_k, self.u_schwa, self.s]], 'N')
         self.u = Sound('u', 'u', 'V')
         self.unschwa_u = SoundChangeRule(self.u_schwa, self.u)
         self.schwa_u = SoundChangeRule(self.u, self.u_schwa)
@@ -922,7 +921,7 @@ class TestWord(unittest.TestCase):
         have one more form.
         """
         forms_before = len(self.abacus.word_forms)
-        self.abacus.add_form_from_rule(self.plural, assign_id=False)
+        self.abacus.add_form_from_rule(self.plural)
         self.assertEqual(len(self.abacus.word_forms), forms_before + 1)
 
     def test_word_37(self):
@@ -930,7 +929,7 @@ class TestWord(unittest.TestCase):
         Test that adding a form from a Word Form Rule causes the new form to
         have its word form name set based on the Word Form Rule.
         """
-        form = self.abacus.add_form_from_rule(self.plural, assign_id=False)
+        form = self.abacus.add_form_from_rule(self.plural)
         self.assertEqual(form.word_form_name, self.plural.name)
 
     def test_word_38(self):
@@ -940,7 +939,7 @@ class TestWord(unittest.TestCase):
         stage the form was added.
         """
         modern_stem = self.abacus.get_modern_stem()
-        form = self.abacus.add_form_from_rule(self.plural, assign_id=False)
+        form = self.abacus.add_form_from_rule(self.plural)
         self.assertEqual(form.get_base_stem(), modern_stem)
 
     def test_word_39(self):
@@ -951,7 +950,7 @@ class TestWord(unittest.TestCase):
         Rule.
         """
         modern_stem = self.abacus.get_modern_stem()
-        form = self.abacus.add_form_from_rule(self.plural, assign_id=False)
+        form = self.abacus.add_form_from_rule(self.plural)
         self.assertEqual(form.get_modern_stem(), modern_stem[:-1] + [modern_stem[-1] + [self.s]])
 
 
@@ -967,10 +966,10 @@ class TestLanguage(unittest.TestCase):
         self.k = Sound('k', 'k', 'C')
         sounds = [self.t, self.e, self.s, self.p, self.ea_i, self.k]
         self.testspeak = Language('Testspeak', sounds, 'C(C)VC(C)')
-        self.test = Word([[self.t, self.e, self.s, self.t]], 'N', assign_id=False)
+        self.test = Word([[self.t, self.e, self.s, self.t]], 'N')
         self.test.add_definition('Something that is done to confirm a desired behavior.', 0)
         self.test.word_id = 1
-        self.speak = Word([[self.s, self.p, self.ea_i, self.k]], 'N', assign_id=False)
+        self.speak = Word([[self.s, self.p, self.ea_i, self.k]], 'N')
         self.test.add_definition('A suffix for the name of a language.', 0)
         self.speak.word_id = 2
         words = [self.test, self.speak]
@@ -980,12 +979,12 @@ class TestLanguage(unittest.TestCase):
         self.w = Sound('w', 'w', 'C')
         self.or_e = Sound('or', 'ɝ', 'V')
         self.d = Sound('d', 'd', 'C')
-        self.word = Word([[self.w, self.or_e, self.d]], 'N', assign_id=False)
+        self.word = Word([[self.w, self.or_e, self.d]], 'N')
         self.final_st_to_s = SoundChangeRule([self.s, self.t], [self.s], condition='_#')
         self.unvoice_d = SoundChangeRule([self.d], [self.t])
         self.ee_i = Sound('ee', 'i', 'V')
         self.ch = Sound('ch', 't͡ʃ', 'C')
-        self.speech = Word([[self.s, self.p, self.ee_i, self.ch]], assign_id=False)
+        self.speech = Word([[self.s, self.p, self.ee_i, self.ch]])
 
     def test_language_1(self):
         """
@@ -993,7 +992,7 @@ class TestLanguage(unittest.TestCase):
         language stage 0.
         """
         word = self.testspeak.generate_word(min_syllable_length=2, max_syllable_length=2, category='N',
-                                            language_stage=0, assign_id=False)
+                                            language_stage=0)
         word.word_id = 3
         self.assertIsInstance(word, Word)  # is a Word
         self.assertEqual(len(word.base_stem), 2)  # has 2 syllables
@@ -1008,7 +1007,7 @@ class TestLanguage(unittest.TestCase):
         Language will not cause the phonetic inventory of the Language to be
         modified from its original stage.
         """
-        word = self.testspeak.generate_word(assign_id=False)
+        word = self.testspeak.generate_word()
         self.testspeak.add_word(word)
         self.assertEqual(self.testspeak.original_phonetic_inventory, self.testspeak.modern_phonetic_inventory)
 
@@ -1030,7 +1029,7 @@ class TestLanguage(unittest.TestCase):
         Test generating 10 words at once and adding them all to the Language
         from which they were generated.
         """
-        words = self.testspeak.generate_words(10, assign_ids=False)
+        words = self.testspeak.generate_words(10)
         words_before = len(self.testspeak.words)
         self.testspeak.add_words(words)
         self.assertEqual(len(self.testspeak.words), words_before + 10)
@@ -1166,7 +1165,8 @@ class TestLanguage(unittest.TestCase):
                     self.assertIsNotNone(source_change.condition_sounds)
                     self.assertIsNotNone(cloned_change.condition_sounds)
                     self.assertEqual(len(source_change.condition_sounds), len(cloned_change.condition_sounds))
-                    for source_sound, cloned_sound in zip(source_change.condition_sounds, cloned_change.condition_sounds):
+                    for source_sound, cloned_sound in zip(source_change.condition_sounds,
+                                                          cloned_change.condition_sounds):
                         self.assertEqual(str(source_sound), str(cloned_sound))
 
     def test_language_15(self):
@@ -1188,7 +1188,8 @@ class TestLanguage(unittest.TestCase):
                     self.assertIsNotNone(source_change.condition_sounds)
                     self.assertIsNotNone(cloned_change.condition_sounds)
                     self.assertEqual(len(source_change.condition_sounds), len(cloned_change.condition_sounds))
-                    for source_sound, cloned_sound in zip(source_change.condition_sounds, cloned_change.condition_sounds):
+                    for source_sound, cloned_sound in zip(source_change.condition_sounds,
+                                                          cloned_change.condition_sounds):
                         self.assertEqual(str(source_sound), str(cloned_sound))
 
     def test_language_16(self):

@@ -73,13 +73,11 @@ class Language:
         for word in words:
             self.add_word(word, language_stage)
 
-    def generate_word(self, min_syllable_length=1, max_syllable_length=2, category='', language_stage=-1,
-                      assign_id=True):
+    def generate_word(self, min_syllable_length=1, max_syllable_length=2, category='', language_stage=-1):
         return self.generate_words(1, min_syllable_length, max_syllable_length, category=category,
-                                   language_stage=language_stage, assign_ids=assign_id)[0]
+                                   language_stage=language_stage)[0]
 
-    def generate_words(self, words=1, min_syllable_length=1, max_syllable_length=2, category='', language_stage=-1,
-                       assign_ids=True):
+    def generate_words(self, words=1, min_syllable_length=1, max_syllable_length=2, category='', language_stage=-1):
         new_words = list()
         for i in range(words):
             stem = list()
@@ -90,7 +88,7 @@ class Language:
                                                            word_final=j == len(syllable_range) - 1,
                                                            previous_syllable=previous_syllable)
                 stem.append(previous_syllable)
-            new_words.append(Word(stem, category, assign_id=assign_ids))
+            new_words.append(Word(stem, category))
         return new_words
 
     def generate_syllable(self, phonotactics=None, language_stage=-1, word_initial=False, word_final=False,
@@ -174,19 +172,19 @@ class Language:
                 if sound not in self.modern_phonetic_inventory:
                     self.modern_phonetic_inventory.append(sound)
 
-    def add_word_form(self, word_form, use_current_stage=True, assign_ids=True):
+    def add_word_form(self, word_form, use_current_stage=True):
         if use_current_stage:
             word_form.original_language_stage = self.get_current_stage()
         self.word_forms.append(word_form)
         form_words = []
         for word in self.copy_words_at_stage(word_form.original_language_stage, include_all_definitions=True):
             if any(category in word.categories for category in word_form.categories):
-                form_words.append(self.apply_form_to_word(word_form, word.copied_from, assign_id=assign_ids))
+                form_words.append(self.apply_form_to_word(word_form, word.copied_from))
         return form_words
 
     @staticmethod
-    def apply_form_to_word(word_form, word, assign_id=True):
-        return word.add_form_from_rule(word_form, assign_id=assign_id)
+    def apply_form_to_word(word_form, word):
+        return word.add_form_from_rule(word_form)
 
     def print_all_word_forms(self, include_ipa=False, include_base_stem=False):
         for word in self.words:
@@ -310,7 +308,7 @@ class Language:
                                                     include_language_sound_changes=False,
                                                     include_all_definitions=True, include_forms=False))
         for form in self.get_forms_at_stage(language_stage):
-            language.add_word_form(form, use_current_stage=False, assign_ids=False)
+            language.add_word_form(form, use_current_stage=False)
         for stage_change in self.sound_changes[:language_stage]:
             sound_change = copy.copy(stage_change)
             sound_change.sound_change_rule_id = None
@@ -328,7 +326,7 @@ class Language:
                                                     include_language_sound_changes=False, branch=True,
                                                     include_forms=False))
         for form in self.get_forms_at_stage(language_stage):
-            language.add_word_form(form, form.original_language_stage, assign_ids=False)
+            language.add_word_form(form, form.original_language_stage)
         language.source_language = self
         language.source_language_stage = language_stage
         self.child_languages.append(language)
