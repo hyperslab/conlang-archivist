@@ -1,4 +1,5 @@
 from conarch import sound_helpers
+from conarch.sound import Sound
 
 
 class SoundChangeRule:
@@ -15,7 +16,8 @@ class SoundChangeRule:
     was added in the case that it represents a historical sound change.
     """
 
-    def __init__(self, old_sounds, new_sounds, condition='', condition_sounds=None, stage=-1):
+    def __init__(self, old_sounds: 'Sound | list[Sound] | None', new_sounds: 'Sound | list[Sound]', condition: str = '',
+                 condition_sounds: 'list[Sound] | None' = None, stage: int = -1):
         self.sound_change_rule_id = None
         self.old_sounds = old_sounds
         if type(self.old_sounds) is not list:
@@ -50,7 +52,7 @@ class SoundChangeRule:
             output = output + ' /' + condition
         return output
 
-    def ipa_str(self):
+    def ipa_str(self) -> str:
         output = ''
         for sound in self.old_sounds:
             if sound is None:
@@ -71,19 +73,19 @@ class SoundChangeRule:
             output = output + ' /' + condition
         return output
 
-    def old_sounds_str(self):
+    def old_sounds_str(self) -> str:
         return sound_helpers.get_sequence_as_string([self.old_sounds])
 
-    def new_sounds_str(self):
+    def new_sounds_str(self) -> str:
         return sound_helpers.get_sequence_as_string([self.new_sounds])
 
-    def old_sounds_ipa_str(self):
+    def old_sounds_ipa_str(self) -> str:
         return sound_helpers.get_sequence_as_string([self.old_sounds], use_ipa=True)
 
-    def new_sounds_ipa_str(self):
+    def new_sounds_ipa_str(self) -> str:
         return sound_helpers.get_sequence_as_string([self.new_sounds], use_ipa=True)
 
-    def get_condition_string(self):
+    def get_condition_string(self) -> str:
         condition = 'Always'
         if self.condition.count('_') == 1:
             if self.condition == '_#':
@@ -105,7 +107,7 @@ class SoundChangeRule:
                             str(self.condition.split('_')[-1])
         return condition
 
-    def get_affix_type_string(self):
+    def get_affix_type_string(self) -> str:
         affix_type = 'Infix/Unknown'
         if self.condition.count('_') == 1:
             if self.condition == '#_#':
@@ -116,11 +118,11 @@ class SoundChangeRule:
                 affix_type = 'Suffix'
         return affix_type
 
-    def get_as_conjugation_rule_string(self):
+    def get_as_conjugation_rule_string(self) -> str:
         return 'Add ' + self.get_affix_type_string() + ' "' + self.new_sounds_str() + \
                '" (/' + self.new_sounds_ipa_str() + '/) ' + self.get_condition_string()
 
-    def map_sounds(self, sound_map):
+    def map_sounds(self, sound_map: 'dict[Sound, Sound]'):
         if self.old_sounds:
             new_old_sounds = []
             for sound in self.old_sounds:

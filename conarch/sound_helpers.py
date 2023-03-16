@@ -2,7 +2,7 @@ import copy
 from conarch.sound import Sound
 
 
-def get_nearby_sound(sequence, i, j, steps=1, backwards=False):
+def get_nearby_sound(sequence: 'list[list[Sound]]', i: int, j: int, steps: int = 1, backwards: bool = False) -> Sound:
     # to refer from a hypothetical character after the end of a sequence, leave i and increment j by 1
     # i.e. don't start a new syllable
     assert steps != 0
@@ -40,7 +40,8 @@ def get_nearby_sound(sequence, i, j, steps=1, backwards=False):
         return sequence[ii][jj]
 
 
-def check_condition(sequence, i1, j1, i2, j2, condition, condition_sounds=None):
+def check_condition(sequence: 'list[list[Sound]]', i1: int, j1: int, i2: int, j2: int, condition: str,
+                    condition_sounds: 'list[Sound] | None' = None) -> bool:
     assert '_' in condition
     if '@' in condition:
         assert type(condition_sounds) is list and len(condition_sounds) >= condition.count('@')
@@ -72,7 +73,9 @@ def check_condition(sequence, i1, j1, i2, j2, condition, condition_sounds=None):
     return conditions_met
 
 
-def change_sounds(sequence, sounds_before, sounds_after, condition='', condition_sounds=None):
+def change_sounds(sequence: 'list[list[Sound]]', sounds_before: 'Sound | list[Sound]',
+                  sounds_after: 'Sound | list[Sound]', condition: str = '',
+                  condition_sounds: 'list[Sound] | None' = None) -> 'list[list[Sound]]':
     # print('changing sound', get_sequence_as_string(sequence), 'from', get_sequence_as_string([sounds_before]), 'to',
     #       get_sequence_as_string([sounds_after]))
     if type(sounds_before) is not list:
@@ -183,7 +186,7 @@ def change_sounds(sequence, sounds_before, sounds_after, condition='', condition
     return new_stem
 
 
-def get_sequence_as_string(sequence, use_ipa=False):
+def get_sequence_as_string(sequence: 'list[list[Sound]]', use_ipa: bool = False) -> str:
     output = ''
     for syllable in sequence:
         if syllable is not None:

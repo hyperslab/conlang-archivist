@@ -1,6 +1,9 @@
 import copy
+from conarch.sound import Sound
+from conarch.sound_change_rule import SoundChangeRule
 from conarch.word import Word
 import random
+from conarch.word_form_rule import WordFormRule
 
 
 class Language:
@@ -28,7 +31,7 @@ class Language:
     language stage.
     """
 
-    def __init__(self, name, phonetic_inventory, phonotactics):
+    def __init__(self, name: str, phonetic_inventory: 'list[Sound]', phonotactics: str):
         self.language_id = None
         self.name = name
         self.original_phonetic_inventory = phonetic_inventory
@@ -41,7 +44,7 @@ class Language:
         self.child_languages = list()
         self.word_forms = list()
 
-    def add_word(self, word, language_stage=-1):
+    def add_word(self, word: Word, language_stage: int = -1):
         if language_stage < 0:
             language_stage = self.get_current_stage()
         self.words.append(word)  # add word
@@ -69,15 +72,17 @@ class Language:
                 if sound not in self.modern_phonetic_inventory:
                     self.modern_phonetic_inventory.append(sound)
 
-    def add_words(self, words, language_stage=-1):
+    def add_words(self, words: 'list[Word]', language_stage: int = -1):
         for word in words:
             self.add_word(word, language_stage)
 
-    def generate_word(self, min_syllable_length=1, max_syllable_length=2, category='', language_stage=-1):
+    def generate_word(self, min_syllable_length: int = 1, max_syllable_length: int = 2, category: str = '',
+                      language_stage: int = -1) -> Word:
         return self.generate_words(1, min_syllable_length, max_syllable_length, category=category,
                                    language_stage=language_stage)[0]
 
-    def generate_words(self, words=1, min_syllable_length=1, max_syllable_length=2, category='', language_stage=-1):
+    def generate_words(self, words: int = 1, min_syllable_length: int = 1, max_syllable_length: int = 2,
+                       category: str = '', language_stage: int = -1) -> 'list[Word]':
         new_words = list()
         for i in range(words):
             stem = list()
@@ -91,8 +96,9 @@ class Language:
             new_words.append(Word(stem, category))
         return new_words
 
-    def generate_syllable(self, phonotactics=None, language_stage=-1, word_initial=False, word_final=False,
-                          ignore_generation_options=False, previous_syllable=None):
+    def generate_syllable(self, phonotactics: 'str | None' = None, language_stage: int = -1, word_initial: bool = False,
+                          word_final: bool = False, ignore_generation_options: bool = False,
+                          previous_syllable: bool = None) -> 'list[Sound]':
         if phonotactics is None:
             tactics = self.phonotactics
         else:
@@ -159,7 +165,7 @@ class Language:
             i += 1
         return syllable
 
-    def apply_sound_change(self, sound_change):
+    def apply_sound_change(self, sound_change: SoundChangeRule):
         sound_change.stage = self.get_current_stage()  # first should be 1
         self.sound_changes.append(sound_change)
         for word in self.words:
@@ -172,7 +178,7 @@ class Language:
                 if sound not in self.modern_phonetic_inventory:
                     self.modern_phonetic_inventory.append(sound)
 
-    def add_word_form(self, word_form, use_current_stage=True):
+    def add_word_form(self, word_form: WordFormRule, use_current_stage: bool = True) -> 'list[Word]':
         if use_current_stage:
             word_form.original_language_stage = self.get_current_stage()
         self.word_forms.append(word_form)
@@ -183,26 +189,28 @@ class Language:
         return form_words
 
     @staticmethod
-    def apply_form_to_word(word_form, word):
+    def apply_form_to_word(word_form: WordFormRule, word: Word) -> Word:
         return word.add_form_from_rule(word_form)
 
-    def print_all_word_forms(self, include_ipa=False, include_base_stem=False):
+    def print_all_word_forms(self, include_ipa: bool = False, include_base_stem: bool = False):
         for word in self.words:
             divider_length = word.print_all_forms(include_ipa=include_ipa, include_base_stem=include_base_stem)
             print('-' * divider_length)
 
-    def get_full_sound_inventory(self):
+    def get_full_sound_inventory(self) -> 'list[Sound]':
         sounds = set()
         for i in range(0, self.get_current_stage() + 1):
             for sound in self.get_phonetic_inventory_at_stage(i):
                 sounds.add(sound)
         return list(sounds)
 
-    def get_current_stage(self):
+    def get_current_stage(self) -> int:
         return len(self.sound_changes)
 
-    def copy_words_at_stage(self, language_stage=-1, include_previous_stages=True, include_language_sound_changes=True,
-                            branch=False, include_all_definitions=False, preserve_ids=False, include_forms=True):
+    def copy_words_at_stage(self, language_stage: int = -1, include_previous_stages: bool = True,
+                            include_language_sound_changes: bool = True, branch: bool = False,
+                            include_all_definitions: bool = False, preserve_ids: bool = False,
+                            include_forms: bool = True) -> 'list[Word]':
         """Return a list containing copies of all words that existed at a
         certain language stage.
 
@@ -271,12 +279,12 @@ class Language:
 
         return stage_words
 
-    def get_sound_changes_at_stage(self, language_stage=-1):
+    def get_sound_changes_at_stage(self, language_stage: int = -1) -> 'list[SoundChangeRule]':
         if language_stage < 0:
             language_stage = self.get_current_stage()
         return [s for s in self.sound_changes if s.stage <= language_stage]
 
-    def get_phonetic_inventory_at_stage(self, language_stage=-1):
+    def get_phonetic_inventory_at_stage(self, language_stage: int = -1) -> 'list[Sound]':
         if language_stage < 0:
             language_stage = self.get_current_stage()
         stage_inventory = copy.copy(self.original_phonetic_inventory)
@@ -300,7 +308,7 @@ class Language:
             stage = stage + 1
         return stage_inventory
 
-    def copy_language_at_stage(self, language_stage=-1):
+    def copy_language_at_stage(self, language_stage: int = -1) -> 'Language':
         if language_stage < 0:
             language_stage = self.get_current_stage()
         language = Language(self.name, self.original_phonetic_inventory, self.phonotactics)
@@ -317,7 +325,7 @@ class Language:
         language.map_sounds(sound_map)
         return language
 
-    def branch_language_at_stage(self, language_stage=-1):
+    def branch_language_at_stage(self, language_stage: int = -1) -> 'Language':
         if language_stage < 0:
             language_stage = self.get_current_stage()
         language = Language('Branch of ' + self.name, self.get_phonetic_inventory_at_stage(language_stage),
@@ -332,24 +340,24 @@ class Language:
         self.child_languages.append(language)
         return language
 
-    def get_branch_depth(self):
+    def get_branch_depth(self) -> int:
         if self.source_language is None:
             return 0
         else:
             return 1 + self.source_language.get_branch_depth()
 
-    def get_forms_added_at_stage(self, stage):
+    def get_forms_added_at_stage(self, stage: int) -> 'list[WordFormRule]':
         return [form for form in self.word_forms if form.original_language_stage == stage]
 
-    def get_forms_at_stage(self, stage):
+    def get_forms_at_stage(self, stage: int) -> 'list[WordFormRule]':
         return [form for form in self.word_forms if form.original_language_stage <= stage and
                 (form.obsoleted_language_stage == -1 or form.obsoleted_language_stage > stage)]
 
-    def add_original_sound(self, sound):
+    def add_original_sound(self, sound: Sound):
         self.original_phonetic_inventory.append(sound)
         self.modern_phonetic_inventory.append(sound)
 
-    def map_sounds(self, sound_map):
+    def map_sounds(self, sound_map: 'dict[Sound, Sound]'):
         new_original_phonetic_inventory = []
         for sound in self.original_phonetic_inventory:
             if sound in sound_map:

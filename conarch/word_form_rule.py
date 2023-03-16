@@ -1,5 +1,6 @@
 import copy
-
+from collections.abc import Generator
+from conarch.sound import Sound
 from conarch.sound_change_rule import SoundChangeRule
 from conarch import sound_helpers
 
@@ -22,7 +23,7 @@ class WordFormRule:
     Rule to conform to a given stage of a language. (note: incomplete)
     """
 
-    def __init__(self, name, categories='', original_language_stage=0):
+    def __init__(self, name: str, categories: str = '', original_language_stage: int = 0):
         self.word_form_rule_id = None
         self.name = name  # the name of the form, e.g. 'Plural' 'Genitive' etc.
         self.categories = categories  # the types of word to which the rule applies, represented as 'N' 'VA' etc.
@@ -31,43 +32,43 @@ class WordFormRule:
         self.original_language_stage = original_language_stage  # the stage the form was added to the language
         self.obsoleted_language_stage = -1  # the stage the form was removed from the language
 
-    def add_suffix_rule(self, suffix, word_end_sound_type=''):
+    def add_suffix_rule(self, suffix: 'Sound | list[Sound]', word_end_sound_type: str = ''):
         if type(suffix) is not list:
             suffix = [suffix]
         suffix_rule = SoundChangeRule(None, suffix, condition=word_end_sound_type + '_#',
                                       stage=self.original_language_stage)
         self.base_form_rules.append(suffix_rule)
 
-    def add_prefix_rule(self, prefix, word_start_sound_type=''):
+    def add_prefix_rule(self, prefix: 'Sound | list[Sound]', word_start_sound_type: str = ''):
         if type(prefix) is not list:
             prefix = [prefix]
         prefix_rule = SoundChangeRule(None, prefix, condition='#_' + word_start_sound_type,
                                       stage=self.original_language_stage)
         self.base_form_rules.append(prefix_rule)
 
-    def add_custom_rule(self, rule):
+    def add_custom_rule(self, rule: SoundChangeRule):
         rule.stage = self.original_language_stage
         self.base_form_rules.append(rule)
 
     def clear_rules(self):
         self.base_form_rules = []
 
-    def get_adjusted_rules(self, stage=-1):  # TODO apply sound changes to rules
+    def get_adjusted_rules(self, stage: int = -1) -> 'Generator[SoundChangeRule]':  # TODO apply sound changes to rules
         for sound_change in self.base_form_rules:
             sound_change.sound_change_rule_id = None  # reset id here or the db save/load won't preserve them separately
             yield copy.copy(sound_change)
 
-    def get_adjusted_rule_strings(self, stage=-1):
+    def get_adjusted_rule_strings(self, stage: int = -1) -> 'Generator[str]':
         for sound_change in self.get_adjusted_rules(stage=stage):
             yield sound_change.get_as_conjugation_rule_string()
 
-    def transform_sequence(self, sequence):
+    def transform_sequence(self, sequence: 'list[list[Sound]]') -> 'list[list[Sound]]':
         for sound_change in self.get_adjusted_rules():
             sequence = sound_helpers.change_sounds(sequence, sound_change.old_sounds, sound_change.new_sounds,
                                                    sound_change.condition, sound_change.condition_sounds)
         return sequence
 
-    def map_sounds(self, sound_map):
+    def map_sounds(self, sound_map: 'dict[Sound, Sound]'):
         for rule in self.base_form_rules:
             rule.map_sounds(sound_map)
         for sound_change in self.sound_changes:

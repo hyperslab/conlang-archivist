@@ -1,6 +1,10 @@
 import copy
+from collections.abc import Generator
 from conarch import sound_helpers
 import itertools
+from conarch.sound import Sound
+from conarch.sound_change_rule import SoundChangeRule
+from conarch.word_form_rule import WordFormRule
 
 
 class Word:
@@ -30,7 +34,7 @@ class Word:
     (at the time) in which it was.
     """
 
-    def __init__(self, base_stem, categories='', original_language_stage=0):
+    def __init__(self, base_stem: 'list[list[Sound]] | None', categories: str = '', original_language_stage: int = 0):
         self.word_id = None
         self.base_stem = base_stem  # don't access this directly unless you're sure the word is not branched etc.
         self.categories = categories
@@ -47,7 +51,7 @@ class Word:
         self.word_form_name = None  # only populated if this is a form of another word
         self.copied_from = None  # not saved to db, only for language.copy_words functions
 
-    def get_base_stem(self):
+    def get_base_stem(self) -> 'list[list[Sound]]':
         if self.is_word_form():
             return self.stem_word.get_stem_at_stage(self.stem_word_language_stage)
         elif not self.has_source_word():
@@ -55,12 +59,12 @@ class Word:
         else:
             return self.source_word.get_stem_at_stage(self.source_word_language_stage)
 
-    def set_as_branch(self, source_word, source_word_language_stage):
+    def set_as_branch(self, source_word: 'Word', source_word_language_stage: int):
         self.source_word = source_word
         self.source_word_language_stage = source_word_language_stage
         self.base_stem = None
 
-    def add_form_word(self, form_word, stage=-1):
+    def add_form_word(self, form_word: 'Word', stage: int = -1) -> 'Word':
         """Add a Word to this Word as a conjugated form.
 
         The form will automatically inherit all language sound changes and
@@ -85,7 +89,7 @@ class Word:
         self.word_forms.append(form_word)
         return form_word
 
-    def add_form_from_rule(self, word_form):
+    def add_form_from_rule(self, word_form: WordFormRule) -> 'Word':
         """Create a Word from a word form rule as a form for this Word.
 
         The form will determine its name, original stage, obsoleted stage, and
@@ -107,23 +111,23 @@ class Word:
             conjugation_rule.stage = form_word.original_language_stage
         return self.add_form_word(form_word, word_form.original_language_stage)
 
-    def has_source_word(self):
+    def has_source_word(self) -> bool:
         return True if self.source_word else False  # not a boolean so this is fine
 
-    def is_word_form(self):
+    def is_word_form(self) -> bool:
         return True if self.stem_word else False  # not a boolean so this is fine
 
     def __str__(self):
         return self.get_modern_stem_string(include_ipa=False)
 
-    def add_definition(self, definition, language_stage):
+    def add_definition(self, definition: str, language_stage: int):
         self.definitions[language_stage] = definition
 
-    def get_definitions_and_stages(self):
+    def get_definitions_and_stages(self) -> 'Generator[str]':
         for stage, definition in self.definitions.items():
             yield definition, stage
 
-    def get_definition_at_stage(self, language_stage, exact=False):
+    def get_definition_at_stage(self, language_stage: int, exact: bool = False) -> str:
         if language_stage in self.definitions.keys():
             return self.definitions[language_stage]
         elif not exact:  # find most recent definition
@@ -137,7 +141,7 @@ class Word:
         else:
             return ''
 
-    def get_definition_stage_at_stage(self, language_stage):
+    def get_definition_stage_at_stage(self, language_stage: int) -> int:
         if language_stage in self.definitions.keys():
             return self.definitions[language_stage]
         else:  # find most recent definition
@@ -152,7 +156,7 @@ class Word:
     def clear_definitions(self):
         self.definitions = dict()
 
-    def has_definition_at_stage(self, language_stage, exact=False):
+    def has_definition_at_stage(self, language_stage: int, exact: bool = False) -> bool:
         if language_stage in self.definitions.keys():
             return True
         elif not exact:  # find most recent definition
@@ -166,17 +170,17 @@ class Word:
         else:
             return False
 
-    def add_language_sound_change(self, sound_change):
+    def add_language_sound_change(self, sound_change: SoundChangeRule):
         self.language_sound_changes.append(sound_change)
         for form in self.word_forms:
             form.add_language_sound_change(sound_change)
 
-    def add_word_sound_change(self, sound_change):
+    def add_word_sound_change(self, sound_change: SoundChangeRule):
         if sound_change.stage == -1:  # word sound changes need a stage to function correctly
             sound_change.stage = self.get_current_stage()  # it is still recommended to set this manually before calling
         self.word_sound_changes.append(sound_change)
 
-    def all_sound_changes(self):
+    def all_sound_changes(self) -> 'list[SoundChangeRule]':
         """Gets all sound changes, in order, that apply to the modern word."""
         ordered_sound_changes = list()
         # add all language sound changes and word sound changes that correspond to a language stage
@@ -190,11 +194,11 @@ class Word:
             ordered_sound_changes.append(word_sound_change)
         return ordered_sound_changes
 
-    def sound_changes_at_stage(self, stage):
+    def sound_changes_at_stage(self, stage: int) -> 'list[SoundChangeRule]':
         return [s for s in self.all_sound_changes() if s.stage <= stage]
 
     @staticmethod
-    def get_stem_string(stem, include_ipa=False):
+    def get_stem_string(stem: 'list[list[Sound]]', include_ipa: bool = False) -> str:
         orthography = ''
         ipa = ''
         for syllable in stem:
@@ -207,46 +211,46 @@ class Word:
         else:
             return orthography
 
-    def get_base_stem_string(self, include_ipa=False):
+    def get_base_stem_string(self, include_ipa: bool = False) -> str:
         return self.get_stem_string(self.get_base_stem(), include_ipa=include_ipa)
 
-    def print_base_stem(self, include_ipa=False):
+    def print_base_stem(self, include_ipa: bool = False):
         print(self.get_base_stem_string(include_ipa=include_ipa))
 
-    def get_modern_stem(self):
+    def get_modern_stem(self) -> 'list[list[Sound]]':
         modern_stem = copy.deepcopy(self.get_base_stem())
         for sound_change in self.all_sound_changes():
             modern_stem = sound_helpers.change_sounds(modern_stem, sound_change.old_sounds, sound_change.new_sounds,
                                                       sound_change.condition, sound_change.condition_sounds)
         return modern_stem
 
-    def get_modern_stem_string(self, include_ipa=False):
+    def get_modern_stem_string(self, include_ipa: bool = False) -> str:
         return self.get_stem_string(self.get_modern_stem(), include_ipa=include_ipa)
 
-    def print_modern_stem(self, include_ipa=False):
+    def print_modern_stem(self, include_ipa: bool = False):
         print(self.get_modern_stem_string(include_ipa=include_ipa))
 
-    def get_stem_at_stage(self, stage):
+    def get_stem_at_stage(self, stage: int) -> 'list[list[Sound]]':
         stage_stem = copy.deepcopy(self.get_base_stem())
         for sound_change in self.sound_changes_at_stage(stage):
             stage_stem = sound_helpers.change_sounds(stage_stem, sound_change.old_sounds, sound_change.new_sounds,
                                                      sound_change.condition, sound_change.condition_sounds)
         return stage_stem
 
-    def get_stem_string_at_stage(self, stage, include_ipa=False):
+    def get_stem_string_at_stage(self, stage: int, include_ipa: bool = False) -> str:
         return self.get_stem_string(self.get_stem_at_stage(stage), include_ipa=include_ipa)
 
-    def print_stem_at_stage(self, stage, include_ipa=False):
+    def print_stem_at_stage(self, stage: int, include_ipa: bool = False):
         print(self.get_stem_string_at_stage(stage, include_ipa=include_ipa))
 
-    def get_form(self, form_name):
+    def get_form(self, form_name: str) -> 'list[list[Sound]]':
         if form_name == 'Stem':
             return self.get_modern_stem()
         for form in self.word_forms:
             if form.word_form_name == form_name:
                 return form.get_modern_stem()
 
-    def print_form(self, form_name, include_ipa=False):
+    def print_form(self, form_name: str, include_ipa: bool = False):
         orthography = ''
         ipa = ''
         form = self.get_form(form_name)
@@ -260,9 +264,10 @@ class Word:
         else:
             print(orthography)
 
-    def get_all_forms_and_names(self, include_base_stem=False, include_modern_stem=True):
+    def get_all_forms_and_names(self, include_base_stem: bool = False, include_modern_stem: bool = True) -> \
+            'tuple[list[list[list[Sound]]], list[str]]':
         final_forms = list()
-        used_forms = list()
+        used_forms: list[str] = list()
         if include_base_stem:
             final_forms.append(copy.deepcopy(self.get_base_stem()))
             used_forms.append('Old Stem')
@@ -276,7 +281,8 @@ class Word:
             used_forms.append(form_name)
         return final_forms, used_forms
 
-    def get_all_form_and_name_strings(self, include_ipa=False, include_base_stem=False, include_modern_stem=True):
+    def get_all_form_and_name_strings(self, include_ipa: bool = False, include_base_stem: bool = False,
+                                      include_modern_stem: bool = True) -> 'Generator[str]':
         form_list, form_name_list = self.get_all_forms_and_names(include_base_stem=include_base_stem,
                                                                  include_modern_stem=include_modern_stem)
         form_names = list()
@@ -309,7 +315,7 @@ class Word:
                 print_string = print_string + ' /' + ipa + '/'
             yield print_string
 
-    def print_all_forms(self, include_ipa=False, include_base_stem=False):
+    def print_all_forms(self, include_ipa: bool = False, include_base_stem: bool = False) -> int:
         form_list, form_name_list = self.get_all_forms_and_names(include_base_stem=include_base_stem)
         form_names = list()
         orthographies = list()
@@ -345,7 +351,7 @@ class Word:
                 longest_print_string = len(print_string)
         return longest_print_string
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         if self.get_base_stem() is not None:
             for syllable in self.get_base_stem():
                 if syllable is not None:
@@ -354,13 +360,13 @@ class Word:
                             return False
         return True
 
-    def get_current_stage(self):
+    def get_current_stage(self) -> int:
         if self.obsoleted_language_stage >= 0:
             return min(len(self.language_sound_changes), self.obsoleted_language_stage)
         else:
             return len(self.language_sound_changes)
 
-    def fits_phonotactics(self, phonotactics, test_base_stem=False):
+    def fits_phonotactics(self, phonotactics: str, test_base_stem: bool = False) -> bool:
         """Check if the Word is compatible with the given phonotactics string.
 
         Compares each syllable in the Word to the phonotactics and returns
@@ -428,17 +434,17 @@ class Word:
 
         return True
 
-    def get_base_sounds(self):
+    def get_base_sounds(self) -> 'Generator[Sound]':
         for syllable in self.get_base_stem():
             for sound in syllable:
                 yield sound
 
-    def get_modern_sounds(self):
+    def get_modern_sounds(self) -> 'Generator[Sound]':
         for syllable in self.get_modern_stem():
             for sound in syllable:
                 yield sound
 
-    def map_sounds(self, sound_map):
+    def map_sounds(self, sound_map: 'dict[Sound, Sound]'):
         if self.base_stem:
             new_base_stem = []
             for syllable in self.base_stem:

@@ -9,8 +9,8 @@ class Sound:
     for automatic generation of words.
     """
 
-    def __init__(self, orthographic_transcription, ipa_transcription='', phonotactics_categories='', frequency=1.0,
-                 description=''):
+    def __init__(self, orthographic_transcription: str, ipa_transcription: str = '', phonotactics_categories: str = '',
+                 frequency: float = 1.0, description: str = ''):
         self.sound_id = None
         self.orthographic_transcription = orthographic_transcription
         self.ipa_transcription = ipa_transcription
@@ -26,7 +26,7 @@ class Sound:
         self.can_cluster_self = True
         self.can_duplicate_across_syllable_boundaries = True
 
-    def set_generation_options(self, options):
+    def set_generation_options(self, options: 'int | str'):
         try:
             options = int(options)
         except ValueError:
@@ -42,7 +42,7 @@ class Sound:
         self.can_cluster_self = option_string[-7] == '1'
         self.can_duplicate_across_syllable_boundaries = option_string[-8] == '1'
 
-    def get_generation_options(self):
+    def get_generation_options(self) -> int:
         option_int = 0
         if self.can_appear_word_initially:
             option_int = option_int + 1
@@ -62,8 +62,9 @@ class Sound:
             option_int = option_int + 10000000
         return int(str(option_int), 2)
 
-    def allowed_by_generation_options(self, syllable_phonotactics, syllable_so_far, previous_syllable=None,
-                                      word_initial_syllable=False, word_final_syllable=False):
+    def allowed_by_generation_options(self, syllable_phonotactics: str, syllable_so_far: 'list[Sound]',
+                                      previous_syllable: 'list[Sound] | None' = None,
+                                      word_initial_syllable: bool = False, word_final_syllable: bool = False) -> bool:
         if self.get_generation_options() == 255:  # all options are true
             return True
 
