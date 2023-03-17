@@ -334,7 +334,7 @@ class Language:
                                                     include_language_sound_changes=False, branch=True,
                                                     include_forms=False))
         for form in self.get_forms_at_stage(language_stage):
-            language.add_word_form(form, form.original_language_stage)
+            language.add_word_form(form, use_current_stage=False)
         language.source_language = self
         language.source_language_stage = language_stage
         self.child_languages.append(language)
