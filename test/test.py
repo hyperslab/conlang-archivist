@@ -514,6 +514,175 @@ class TestSoundHelpers(unittest.TestCase):
         new_sequence = change_sounds(old_sequence, [a, a, a], [c])
         self.assertEqual(target_sequence, new_sequence)
 
+    def test_change_sounds_35(self):
+        """
+        Test a sound change that converts all sounds of a category into a
+        different single sound.
+
+        'abcde' to 'aaaae' via 'C > a'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        d = Sound('d', phonotactics_categories='C')
+        e = Sound('e', phonotactics_categories='V')
+        old_sequence = [[a, b, c, d, e]]
+        target_sequence = [[a, a, a, a, e]]
+        new_sequence = change_sounds(old_sequence, ['C'], [a])
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_36(self):
+        """
+        Test a sound change that converts all sounds of a category into a
+        different single sound by passing a str for sounds_before instead of a
+        List of a single str.
+
+        'abcde' to 'aaaae' via 'C > a'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        d = Sound('d', phonotactics_categories='C')
+        e = Sound('e', phonotactics_categories='V')
+        old_sequence = [[a, b, c, d, e]]
+        target_sequence = [[a, a, a, a, e]]
+        new_sequence = change_sounds(old_sequence, 'C', [a])
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_37(self):
+        """
+        Test a sound change that converts all sounds of a category into a
+        different single sound by passing a Sound for sounds_after instead of
+        a List of a single Sound.
+
+        'abcde' to 'aaaae' via 'C > a'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        d = Sound('d', phonotactics_categories='C')
+        e = Sound('e', phonotactics_categories='V')
+        old_sequence = [[a, b, c, d, e]]
+        target_sequence = [[a, a, a, a, e]]
+        new_sequence = change_sounds(old_sequence, ['C'], a)
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_38(self):
+        """
+        Test a sound change that converts all sounds of a category into a
+        different single sound by passing a str for sounds_before instead of a
+        List of a single str as well as a Sound for sounds_after instead of a
+        List of a single Sound.
+
+        'abcde' to 'aaaae' via 'C > a'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        d = Sound('d', phonotactics_categories='C')
+        e = Sound('e', phonotactics_categories='V')
+        old_sequence = [[a, b, c, d, e]]
+        target_sequence = [[a, a, a, a, e]]
+        new_sequence = change_sounds(old_sequence, 'C', a)
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_39(self):
+        """
+        Test a sound change with multiple possible ways to match will
+        prioritize the leftmost match.
+
+        'abbbc' to 'aabc' via 'bb > a' (as opposed to 'abac')
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        old_sequence = [[a, b, b, b, c]]
+        target_sequence = [[a, a, b, c]]
+        new_sequence = change_sounds(old_sequence, [b, b], [a])
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_40(self):
+        """
+        Test a sound change with multiple possible ways to match will
+        prioritize the leftmost match every time.
+
+        'abbbbbc' to 'aaabc' via 'bb > a' (as opposed to 'abaac')
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        old_sequence = [[a, b, b, b, b, b, c]]
+        target_sequence = [[a, a, a, b, c]]
+        new_sequence = change_sounds(old_sequence, [b, b], [a])
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_41(self):
+        """
+        Test a sound change that converts all sequences of two consecutive
+        consonants into a different single sound.
+
+        'abcde' to 'aade' via 'CC > a'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        d = Sound('d', phonotactics_categories='C')
+        e = Sound('e', phonotactics_categories='V')
+        old_sequence = [[a, b, c, d, e]]
+        target_sequence = [[a, a, d, e]]
+        new_sequence = change_sounds(old_sequence, ['C', 'C'], [a])
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_42(self):
+        """
+        Test a sound change that converts all consonants into a sequence of
+        two sounds.
+
+        'abc' to 'adede' via 'C > de'
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        d = Sound('d', phonotactics_categories='C')
+        e = Sound('e', phonotactics_categories='V')
+        old_sequence = [[a, b, c]]
+        target_sequence = [[a, d, e, d, e]]
+        new_sequence = change_sounds(old_sequence, ['C'], [d, e])
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_43(self):
+        """
+        Test that a sound change will parse through the old sounds only once
+        and not act recursively, i.e. that if a new "match" is created during
+        modification, it will be ignored.
+
+        'abc' to 'adabc' via 'bc > dabc' (as opposed to 'adadadada...bc')
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        d = Sound('d', phonotactics_categories='C')
+        old_sequence = [[a, b, c]]
+        target_sequence = [[a, d, a, b, c]]
+        new_sequence = change_sounds(old_sequence, [b, c], [d, a, b, c])
+        self.assertEqual(target_sequence, new_sequence)
+
+    def test_change_sounds_44(self):
+        """
+        Test that a sound change will parse through the old sounds only once
+        and not act recursively when matching on a category of Sound.
+
+        'abc' to 'adddd' via 'C > dd' (as opposed to 'adddddddddd...')
+        """
+        a = Sound('a', phonotactics_categories='V')
+        b = Sound('b', phonotactics_categories='C')
+        c = Sound('c', phonotactics_categories='C')
+        d = Sound('d', phonotactics_categories='C')
+        old_sequence = [[a, b, c]]
+        target_sequence = [[a, d, d, d, d]]
+        new_sequence = change_sounds(old_sequence, ['C'], [d, d])
+        self.assertEqual(target_sequence, new_sequence)
+
 
 # noinspection SpellCheckingInspection
 class TestWord(unittest.TestCase):
