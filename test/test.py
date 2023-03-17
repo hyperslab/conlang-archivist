@@ -898,7 +898,7 @@ class TestWord(unittest.TestCase):
         dummy_form = Word([[]])
         self.abacus.add_form_word(dummy_form)
         self.assertTrue(dummy_form.has_definition_at_stage(0))
-        self.assertIn('A tool for performing calculations.', dummy_form.get_definition_stage_at_stage(0))
+        self.assertIn('A tool for performing calculations.', dummy_form.get_definition_at_stage(0))
 
     def test_word_35(self):
         """
@@ -911,9 +911,9 @@ class TestWord(unittest.TestCase):
         dummy_form = Word([[]])
         self.abacus.add_form_word(dummy_form)
         self.assertTrue(dummy_form.has_definition_at_stage(0))
-        self.assertIn('A tool for performing calculations.', dummy_form.get_definition_stage_at_stage(0))
+        self.assertIn('A tool for performing calculations.', dummy_form.get_definition_at_stage(0))
         self.assertTrue(dummy_form.has_definition_at_stage(1))
-        self.assertIn('An old tool for performing calculations.', dummy_form.get_definition_stage_at_stage(1))
+        self.assertIn('An old tool for performing calculations.', dummy_form.get_definition_at_stage(1))
 
     def test_word_36(self):
         """
