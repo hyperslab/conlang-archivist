@@ -73,8 +73,8 @@ def check_condition(sequence: 'list[list[Sound]]', i1: int, j1: int, i2: int, j2
     return conditions_met
 
 
-def change_sounds(sequence: 'list[list[Sound]]', sounds_before: 'Sound | list[Sound]',
-                  sounds_after: 'Sound | list[Sound]', condition: str = '',
+def change_sounds(sequence: 'list[list[Sound]]', sounds_before: 'Sound | list[Sound] | None | str | list[str]',
+                  sounds_after: 'Sound | list[Sound] | None | str | list[str]', condition: str = '',
                   condition_sounds: 'list[Sound] | None' = None) -> 'list[list[Sound]]':
     # print('changing sound', get_sequence_as_string(sequence), 'from', get_sequence_as_string([sounds_before]), 'to',
     #       get_sequence_as_string([sounds_after]))
