@@ -1154,6 +1154,8 @@ class TestLanguage(unittest.TestCase):
         self.ee_i = Sound('ee', 'i', 'V')
         self.ch = Sound('ch', 't͡ʃ', 'C')
         self.speech = Word([[self.s, self.p, self.ee_i, self.ch]])
+        self.plural = WordFormRule('Plural', 'N')
+        self.plural.add_suffix_rule(self.s)
 
     def test_language_1(self):
         """
@@ -1404,6 +1406,66 @@ class TestLanguage(unittest.TestCase):
             for sound in word.get_modern_sounds():
                 for inventory_sound in inventory_sounds:
                     self.assertIsNot(sound, inventory_sound)  # assertNotIn does not apply here due to using __eq__
+
+    def test_language_20(self):
+        """
+        Test that copied words in a branched Language are all considered to be
+        added at stage 0, including words that were not at stage 0 in the
+        source Language.
+        """
+        # add a word that is beyond stage 0
+        self.testspeak.apply_sound_change(self.final_st_to_s)
+        self.testspeak.add_word(self.word)
+        self.assertNotEqual(self.word.original_language_stage, 0)  # make sure test is meaningful
+
+        branch = self.testspeak.branch_language_at_stage()  # not specifying stage uses most recent
+        for word in branch.words:
+            self.assertEqual(word.original_language_stage, 0)
+
+    def test_language_21(self):
+        """
+        Test that the original phonetic inventory of a branched Language is
+        equal to the modern phonetic inventory of its source Language.
+        """
+        # add a sound so that the original and modern inventories differ
+        self.testspeak.add_word(self.word)  # 'word' should contain new sounds; make sure in the next line
+        self.assertNotEqual(self.testspeak.original_phonetic_inventory, self.testspeak.modern_phonetic_inventory)
+
+        branch = self.testspeak.branch_language_at_stage()  # not specifying stage uses most recent
+        self.assertEqual(branch.original_phonetic_inventory, self.testspeak.modern_phonetic_inventory)
+
+    def test_language_22(self):
+        """
+        Test that a copied Language preserves the word forms from its original
+        Langauge.
+        """
+        self.testspeak.add_word_form(self.plural)
+        cloned = self.testspeak.copy_language_at_stage()  # not specifying stage uses most recent
+        self.assertEqual(len(cloned.word_forms), len(self.testspeak.word_forms))
+        for c_form, o_form in zip(cloned.word_forms, self.testspeak.word_forms):
+            self.assertEqual(c_form.name, o_form.name)
+            self.assertEqual(c_form.categories, o_form.categories)
+            self.assertEqual(c_form.original_language_stage, o_form.original_language_stage)
+            self.assertEqual(c_form.obsoleted_language_stage, o_form.obsoleted_language_stage)
+            for c_rule, o_rule in zip(c_form.base_form_rules, o_form.base_form_rules):
+                self.assertEqual(str(c_rule), str(o_rule))
+            for c_change, o_change in zip(c_form.sound_changes, o_form.sound_changes):
+                self.assertEqual(str(c_change), str(o_change))
+
+    def test_language_23(self):
+        """
+        Test that copied word forms in a branched Language are all considered
+        to be added at stage 0, including word forms that were not at stage 0
+        in the source Language.
+        """
+        # add a form after stage 0
+        self.testspeak.apply_sound_change(self.final_st_to_s)
+        self.testspeak.add_word_form(self.plural)
+        self.assertNotEqual(self.plural.original_language_stage, 0)  # make sure test is meaningful
+
+        branch = self.testspeak.branch_language_at_stage()  # not specifying stage uses most recent
+        for form in branch.word_forms:
+            self.assertEqual(form.original_language_stage, 0)
 
 
 if __name__ == '__main__':
