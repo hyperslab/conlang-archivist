@@ -1467,6 +1467,53 @@ class TestLanguage(unittest.TestCase):
         for form in branch.word_forms:
             self.assertEqual(form.original_language_stage, 0)
 
+    def test_language_24(self):
+        """
+        Test that copied words in a branched Language have base stems equal to
+        the modern stems of equivalent words in the source Language from the
+        stage at which the Language was branched.
+        """
+        # add some words and sound changes (note: all pre-branch)
+        self.testspeak.apply_sound_change(self.final_st_to_s)
+        self.testspeak.add_word(self.word)
+        self.testspeak.apply_sound_change(self.unvoice_d)
+
+        branch = self.testspeak.branch_language_at_stage()  # not specifying stage uses most recent
+        for b_word, o_word in zip(branch.words, self.testspeak.words):
+            self.assertEqual(b_word.get_base_stem_string(), o_word.get_modern_stem_string())
+
+    def test_language_25(self):
+        """
+        Test that branching a Language does not modify stage information for
+        words in the original Language.
+        """
+        # add a word beyond stage 0
+        self.testspeak.apply_sound_change(self.final_st_to_s)
+        self.testspeak.add_word(self.word)
+
+        stages = []
+        for word in self.testspeak.words:
+            stages.append((word.original_language_stage, word.obsoleted_language_stage))
+        self.testspeak.branch_language_at_stage()  # not specifying stage uses most recent
+        for word, old_stage_info in zip(self.testspeak.words, stages):
+            self.assertEqual((word.original_language_stage, word.obsoleted_language_stage), old_stage_info)
+
+    def test_language_26(self):
+        """
+        Test that branching a Language does not modify stage information for
+        word forms in the original Language.
+        """
+        # add a word form beyond stage 0
+        self.testspeak.apply_sound_change(self.final_st_to_s)
+        self.testspeak.add_word_form(self.plural)
+
+        stages = []
+        for form in self.testspeak.word_forms:
+            stages.append((form.original_language_stage, form.obsoleted_language_stage))
+        self.testspeak.branch_language_at_stage()  # not specifying stage uses most recent
+        for form, old_stage_info in zip(self.testspeak.word_forms, stages):
+            self.assertEqual((form.original_language_stage, form.obsoleted_language_stage), old_stage_info)
+
 
 if __name__ == '__main__':
     unittest.main()
