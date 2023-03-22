@@ -315,7 +315,7 @@ class Language:
         language.add_words(self.copy_words_at_stage(language_stage=language_stage, include_previous_stages=True,
                                                     include_language_sound_changes=False,
                                                     include_all_definitions=True, include_forms=False))
-        for form in self.get_forms_at_stage(language_stage):
+        for form in copy.deepcopy(self.get_forms_at_stage(language_stage)):
             language.add_word_form(form, use_current_stage=False)
         for stage_change in self.sound_changes[:language_stage]:
             sound_change = copy.copy(stage_change)
@@ -333,7 +333,7 @@ class Language:
         language.add_words(self.copy_words_at_stage(language_stage=language_stage, include_previous_stages=True,
                                                     include_language_sound_changes=False, branch=True,
                                                     include_forms=False))
-        for form in self.get_forms_at_stage(language_stage):
+        for form in copy.deepcopy(self.get_forms_at_stage(language_stage)):
             language.add_word_form(form, use_current_stage=False)
             form.original_language_stage = 0
             form.obsoleted_language_stage = -1
