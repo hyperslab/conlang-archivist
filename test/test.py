@@ -1514,6 +1514,47 @@ class TestLanguage(unittest.TestCase):
         for form, old_stage_info in zip(self.testspeak.word_forms, stages):
             self.assertEqual((form.original_language_stage, form.obsoleted_language_stage), old_stage_info)
 
+    def test_language_27(self):
+        """
+        Test that the base stem of branched words in a branched Language will
+        be modified when the stem of the corresponding source Word from the
+        original language at or before the stage of the branch is modified.
+        """
+        self.testspeak.add_word(self.word)
+        branch = self.testspeak.branch_language_at_stage()
+        original_stems = [w.get_base_stem_string() for w in branch.words]
+        self.assertIn('word', original_stems)
+        self.assertNotIn('wort', original_stems)  # test won't be meaningful if this is already in here
+
+        # change source word at stage of the branch
+        self.unvoice_d.stage = self.word.original_language_stage
+        self.word.add_word_sound_change(self.unvoice_d)
+        new_stems = [w.get_base_stem_string() for w in branch.words]
+        self.assertIn('wort', new_stems)
+        self.assertNotIn('word', new_stems)
+
+    def test_language_28(self):
+        """
+        Test that the base stem of branched words in a branched Language will
+        not be modified when the stem of the corresponding source Word from
+        the original language after the stage of the branch is modified.
+        """
+        self.testspeak.add_word(self.word)
+        branch = self.testspeak.branch_language_at_stage()
+        original_stems = [w.get_base_stem_string() for w in branch.words]
+        self.assertIn('word', original_stems)
+        self.assertNotIn('wort', original_stems)  # test won't be meaningful if this is already in here
+
+        # advance source language by a stage
+        self.testspeak.apply_sound_change(self.final_st_to_s)
+
+        # change source word at stage after the branch
+        self.unvoice_d.stage = self.testspeak.get_current_stage()
+        self.word.add_word_sound_change(self.unvoice_d)
+        new_stems = [w.get_base_stem_string() for w in branch.words]
+        self.assertIn('word', new_stems)
+        self.assertNotIn('wort', new_stems)
+
 
 if __name__ == '__main__':
     unittest.main()
