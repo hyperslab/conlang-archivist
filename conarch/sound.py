@@ -27,6 +27,12 @@ class Sound:
         self.can_duplicate_across_syllable_boundaries = True
 
     def set_generation_options(self, options: 'int | str'):
+        """Set the 8 generation options of this Sound based on one integer.
+
+        :param options: The value of the combined 8 boolean options ranging
+        from 0 to 255.
+        :type options: int
+        """
         try:
             options = int(options)
         except ValueError:
@@ -43,6 +49,12 @@ class Sound:
         self.can_duplicate_across_syllable_boundaries = option_string[-8] == '1'
 
     def get_generation_options(self) -> int:
+        """Return an integer representing the 8 boolean generation options.
+
+        :return: An integer representing the 8 boolean generation options
+        ranging in value from 0 (nothing allowed) to 255 (everything allowed).
+        :rtype: int
+        """
         option_int = 0
         if self.can_appear_word_initially:
             option_int = option_int + 1
@@ -65,6 +77,37 @@ class Sound:
     def allowed_by_generation_options(self, syllable_phonotactics: str, syllable_so_far: 'list[Sound]',
                                       previous_syllable: 'list[Sound] | None' = None,
                                       word_initial_syllable: bool = False, word_final_syllable: bool = False) -> bool:
+        """Determine if this Sound can appear next by its generation options.
+
+        The previous and current syllables are provided and this Sound is
+        tested for addition to the end of the current syllable. If it is to be
+        the first Sound in a syllable, the current syllable should be blank.
+
+        Options that cannot be processed based on provided information will
+        be skipped over and assumed to pass.
+
+        :param syllable_phonotactics: The phonotactics string used in
+        generating the syllable that this Sound is being considered for.
+        :type syllable_phonotactics: str
+        :param syllable_so_far: The current syllable that this Sound is being
+        considered for addition to. Should be an empty list if this Sound is
+        to be the first in a new syllable.
+        :type syllable_so_far: list[Sound]
+        :param previous_syllable: The syllable in the same word as the current
+        syllable that precedes the current syllable. Should generally be None
+        if the current syllable is the first syllable in a word.
+        :type previous_syllable: list[Sound]
+        :param word_initial_syllable: Whether the current syllable that this
+        Sound is being considered for is the first syllable in a word.
+        :type word_initial_syllable: bool
+        :param word_final_syllable: Whether the current syllable that this
+        Sound is being considered for is the last syllable in a word.
+        :type word_final_syllable: bool
+        :return: True if this Sound is not forbidden by its (determinable)
+        generation options to be appended to the end of syllable_so_far and
+        False otherwise.
+        :rtype: bool
+        """
         if self.get_generation_options() == 255:  # all options are true
             return True
 
