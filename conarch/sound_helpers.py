@@ -3,6 +3,36 @@ from conarch.sound import Sound
 
 
 def get_nearby_sound(sequence: 'list[list[Sound]]', i: int, j: int, steps: int = 1, backwards: bool = False) -> Sound:
+    """Return a Sound in a sequence a certain number of sounds away.
+
+    Works across syllables, so the next Sound after the last Sound in a
+    syllable will be the first Sound in the next syllable.
+
+    1 step will return the Sound following the current Sound, 2 will
+    return the Sound after that, and so on. -1 steps will return the Sound
+    preceding the current Sound.
+
+    If there is no Sound at the target position, return a new Sound
+    represented by the character '#'.
+
+    :param sequence: The sequence of sounds.
+    :type sequence: list[list[Sound]]
+    :param i: The index of the syllable of the current Sound. 0 refers to
+    the first syllable in a sequence.
+    :type i: int
+    :param j: The index of the current Sound within its syllable. 0 refers
+    to the first Sound in a syllable.
+    :type j: int
+    :param steps: The distance between the current Sound and the target
+    Sound.
+    :type steps: int
+    :param backwards: Whether to search in the opposite direction implied
+    by the sign of the 'steps' parameter.
+    :type backwards: bool
+    :return: The Sound at the target position, or a new Sound represented
+    by '#' if there is no Sound there.
+    :rtype: Sound
+    """
     # to refer from a hypothetical character after the end of a sequence, leave i and increment j by 1
     # i.e. don't start a new syllable
     assert steps != 0
@@ -42,6 +72,42 @@ def get_nearby_sound(sequence: 'list[list[Sound]]', i: int, j: int, steps: int =
 
 def check_condition(sequence: 'list[list[Sound]]', i1: int, j1: int, i2: int, j2: int, condition: str,
                     condition_sounds: 'list[Sound] | None' = None) -> bool:
+    """Check if a Sound (or sounds) in a sequence matches a condition.
+
+    For example, the condition '_#' looks for sounds at the end of a word.
+    This function will return True for this condition if a provided Sound
+    is at the end of its sequence, or in the case of multiple sounds, if
+    the entire subsequence is at the end of its sequence.
+
+    :param sequence: The full sequence of sounds.
+    :type sequence: list[list[Sound]]
+    :param i1: The index of the first syllable in the subsequence of
+    sounds being considered. 0 refers to the first syllable in a sequence.
+    :type i1: int
+    :param j1: The index of the first Sound in the subsequence being
+    considered within its syllable. 0 refers to the first Sound in a
+    syllable.
+    :type j1: int
+    :param i2: The index of the last syllable in the subsequence of sounds
+    being considered.
+    :type i2: int
+    :param j2: The index of the last Sound in the subsequence being
+    considered within its syllable.
+    :type j2: int
+    :param condition: The condition to evaluate.
+    :type condition: str
+    :param condition_sounds: Any sounds that are be part of the condition
+    as specified by the '@' character in the condition. For example, the
+    condition '@_@' matches on sounds that are in between two specified
+    sounds, and those specified sounds are defined in this parameter in
+    order. So, [Sound('s'), Sound('b')] for this parameter would cause a
+    match on any sounds in between the sounds represented by 's' and 'b'.
+    Can be None if there are no specific sounds in the condition.
+    :type condition_sounds: list[Sound]
+    :return: Whether the condition is matched by the specified Sound or
+    subsequence of sounds.
+    :rtype: bool
+    """
     assert '_' in condition
     if '@' in condition:
         assert type(condition_sounds) is list and len(condition_sounds) >= condition.count('@')
@@ -74,8 +140,37 @@ def check_condition(sequence: 'list[list[Sound]]', i1: int, j1: int, i2: int, j2
 
 
 def change_sounds(sequence: 'list[list[Sound]]', sounds_before: 'Sound | list[Sound] | None | str | list[str]',
-                  sounds_after: 'Sound | list[Sound] | None | str | list[str]', condition: str = '',
+                  sounds_after: 'Sound | list[Sound] | None', condition: str = '',
                   condition_sounds: 'list[Sound] | None' = None) -> 'list[list[Sound]]':
+    """Convert sounds in a sequence into other sounds.
+
+    All occurrences of sounds_before in the sequence that match the
+    provided condition will be replaced with sounds_after.
+
+    :param sequence: The sequence of sounds.
+    :type sequence: list[list[Sound]]
+    :param sounds_before: The Sound, sequence of sounds, category of
+    Sound, or sequence of categories to convert into something else.
+    :type sounds_before: Sound | list[Sound] | str | list[str]
+    :param sounds_after: The Sound or sequence of sounds to replace
+    sounds_before with. Can also be None to simply remove sounds_before.
+    :type sounds_after: Sound | list[Sound]
+    :param condition: The condition to check sounds_before against before
+    replacing it. For example, '_#' will cause sounds_before to only be
+    replaced at the end of a sequence as opposed to every time it occurs
+    in the sequence.
+    :type condition: str
+    :param condition_sounds: Any sounds that are be part of the condition
+    as specified by the '@' character in the condition. For example, the
+    condition '@_@' matches on sounds that are in between two specified
+    sounds, and those specified sounds are defined in this parameter in
+    order. So, [Sound('s'), Sound('b')] for this parameter would cause a
+    match on any sounds in between the sounds represented by 's' and 'b'.
+    Can be None if there are no specific sounds in the condition.
+    :type condition_sounds: list[Sound]
+    :return: The converted sequence.
+    :rtype: list[list[Sound]]
+    """
     # print('changing sound', get_sequence_as_string(sequence), 'from', get_sequence_as_string([sounds_before]), 'to',
     #       get_sequence_as_string([sounds_after]))
     if type(sounds_before) is not list:
@@ -187,6 +282,19 @@ def change_sounds(sequence: 'list[list[Sound]]', sounds_before: 'Sound | list[So
 
 
 def get_sequence_as_string(sequence: 'list[list[Sound]]', use_ipa: bool = False) -> str:
+    """Return a string representation of a sequence of sounds.
+
+    For example, "[[Sound('h'), Sound('e'), Sound('l')], [Sound('l'),
+    Sound('o')]]" will return "hello".
+
+    :param sequence: The sequence of sounds.
+    :type sequence: list[list[Sound]]
+    :param use_ipa: Whether to use the IPA representation of each Sound
+    instead of its orthographic transcription.
+    :type use_ipa: bool
+    :return: A string representation of a sequence of sounds.
+    :rtype: str
+    """
     output = ''
     for syllable in sequence:
         if syllable is not None:
